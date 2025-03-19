@@ -81,9 +81,10 @@ let mousewheelCounter = 0
 
     function getUserName() { // works only on e.moevm.info
         return document
-            .getElementById('action-menu-toggle-1')
-            .getElementsByClassName('usertext')[0]
-            .innerText;
+    		.getElementById('carousel-item-main')
+    		.getElementsByClassName("loggedinas")[0]
+    		.querySelector('strong')
+		.innerText
     }
 
     function getCourseName() { // works only on e.moevm.info
@@ -95,9 +96,9 @@ let mousewheelCounter = 0
 
     function getUserID(){ // works only on e.moevm.info
         return document
-            .getElementById('page-footer')
-            .getElementsByTagName('a')[0]
-            .getAttribute("href").slice(41)
+		.getElementById('page-wrapper')
+		.getElementsByClassName('hidden h-100')[0]
+		.getAttribute('data-user-id')
     }
 
     function createDateAsUTC(date) {
@@ -124,7 +125,9 @@ let mousewheelCounter = 0
             if (xhr.readyState === 4) {
                 let doc = xhr.response;
                 let email = doc.getElementById('region-main')
-                .getElementsByTagName('a')[1].innerText;
+                .getElementsByClassName('contentnode')[0]
+		.querySelector('a')
+		.innerText;
                 callback(email);
             }
         }
