@@ -80,10 +80,11 @@
 <script>
 
 let mousewheelCounter = 0
+    
+    // TODO: сохранять в переменные основные параметры (id/email/name), чтобы не смотреть каждый раз в HTML?
 
     function getUserName() { // works only on e.moevm.info
         return document
-    		.getElementById('carousel-item-main')
     		.getElementsByClassName("loggedinas")[0]
     		.querySelector('strong')
 		.innerText
@@ -98,8 +99,7 @@ let mousewheelCounter = 0
 
     function getUserID(){ // works only on e.moevm.info
         return document
-		.getElementById('page-wrapper')
-		.getElementsByClassName('hidden h-100')[0]
+            .getElementById('nav-notification-popover-container')
 		.getAttribute('data-user-id')
     }
 
