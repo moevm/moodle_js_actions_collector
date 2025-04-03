@@ -4,20 +4,23 @@
     async function initTracker(){
         var pageId = await sendPageInfo();
         var interactions = new Interactor({
-        trackAll: false,
-        numberActionsToSend: 5,
-        trackPagePresence: true,
-        pageId: pageId,
-        interactions: true,
-        interactionElement: ["A", "BUTTON", "TEXTAREA", "INPUT"],
-        interactionEvents: ["mousedown", "copy", "paste"],
-        conversions: true,
-        conversionElement: "conversion",
-        conversionEvents: ["scroll", "contextmenu"],
-        endpoint: `${domain}/api/statistics`,
-        async: true,
-        debug: true
-    });
+            trackAll: false,
+            numberActionsToSend: 5,
+            trackPagePresence: true,
+            pageId: pageId,
+            interactions: true,
+            interactionElement: ["A", "BUTTON", "TEXTAREA", "INPUT"],
+            interactionEvents: ["mousedown", "copy", "paste"],
+            conversions: true,
+            conversionElement: "conversion",
+            conversionEvents: ["scroll", "contextmenu"],
+            endpoint: `${domain}/api/statistics`,
+            async: true,
+            debug: true
+        });
+        window.addEventListener('beforeunload', (event) => {
+            interactions.__sendInteractions__();
+        });
     }
 
     async function sendPageInfo() {
