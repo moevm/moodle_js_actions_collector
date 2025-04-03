@@ -1,10 +1,6 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then
-  FILE=./docker-compose.yaml
-else
-  FILE=$1
-fi
+FILE=./docker-compose.yaml
 
 docker compose -f "$FILE" down -v
 docker compose -f "$FILE" up -d --build
