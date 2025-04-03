@@ -210,7 +210,7 @@ let mousewheelCounter = 0
                         if (interactor.interactionElement.includes(e.target.nodeName)) {
                             if(interactor.debug)
                                 console.log(e.target)
-                            interactor.__addInteraction__(e, "interactions", e.target.toString());
+                            interactor.__addInteraction__(e, "interactions", e.nodeName);
                         }
                     });
                 }
@@ -223,7 +223,7 @@ let mousewheelCounter = 0
                         e.stopPropagation();
                         if(interactor.debug)
                             console.log(e.target)
-                        interactor.__addInteraction__(e, "conversation", e.target.toString());
+                        interactor.__addInteraction__(e, "conversation", e.nodeName);
                     });
                 }
             }
@@ -241,8 +241,10 @@ let mousewheelCounter = 0
 
                 let name;
                 if(e.target)
-                if (e.target.nodeName == 'BUTTON')
+                if (element_type.toLowerCase() == 'button')
                     name = e.target.innerText
+                else if (element_type.toLowerCase() == 'input')
+                    name = e.target.value
                 else
                     name = e.target.nodeName.toLowerCase()
               let html_code = `${e.target.outerHTML}`
@@ -252,7 +254,7 @@ let mousewheelCounter = 0
                 trackingEntity = {
                     timestamp: createDateAsUTC(new Date()).toISOString(),
                     page: interactor.session.page.href,
-                    element_type: element_type,
+                    element_type: element_type.toLowerCase(),
                     element_name: name,
                     action_type: type,
                     event_type: e.type,
@@ -281,8 +283,10 @@ let mousewheelCounter = 0
 
                 let name;
                 if(e.target)
-                if (e.target.nodeName == 'BUTTON')
+                if (element_type.toLowerCase() == 'button')
                     name = e.target.innerText
+                else if (element_type.toLowerCase() == 'input')
+                    name = e.target.value
                 else
                     name = e.target.nodeName.toLowerCase()
                 let html_code = `${e.target.outerHTML}`
@@ -292,7 +296,7 @@ let mousewheelCounter = 0
                 trackingEntity = {
                     timestamp: createDateAsUTC(new Date()).toISOString(),
                     page: interactor.session.page.href,
-                    element_type: element_type,
+                    element_type: element_type.toLowerCase(),
                     element_name: name,
                     action_type: type,
                     event_type: e.type,
