@@ -87,7 +87,7 @@ let mousewheelCounter = 0
     }
 
     function getCourseName() { // works only on e.moevm.info
-        return document
+        return document.getElementsByClassName('breadcrumb')[0].getElementsByTagName('a')[0].innerText + "/" + document
             .getElementById('page-header')
             .getElementsByTagName('h1')[0]
             .innerText

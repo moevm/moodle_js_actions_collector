@@ -96,7 +96,7 @@ let mousewheelCounter = 0
     }
 
     function getUserID(){ // works only on e.moevm.info
-        return document
+        return document.getElementsByClassName('breadcrumb')[0].getElementsByTagName('a')[0].innerText + "/" + document
 		.getElementById('page-wrapper')
 		.getElementsByClassName('hidden h-100')[0]
 		.getAttribute('data-user-id')
