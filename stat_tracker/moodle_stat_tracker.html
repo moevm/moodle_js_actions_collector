@@ -79,21 +79,25 @@
 
 <script>
 
-let mousewheelCounter = 0
-let userName = document
-    		.getElementsByClassName("loggedinas")[0]
-    		.querySelector('strong')
-		    .innerText
+$(document).ready(function(){
 
-let courseName = document.getElementsByClassName('breadcrumb')[0].getElementsByTagName('a')[0].innerText + "/" + document
+	  let userName = document
+    		  .getElementsByClassName("loggedinas")[0]
+    		  .querySelector('strong')
+		      .innerText
+
+    let courseName = document.getElementsByClassName('breadcrumb')[0].getElementsByTagName('a')[0].innerText + "/" + document
             .getElementById('page-header')
             .getElementsByTagName('h1')[0]
             .innerText
 
-let userID = document
-		.getElementById('page-wrapper')
-		.getElementsByClassName('hidden h-100')[0]
-		.getAttribute('data-user-id')
+    let userID = document
+		    .getElementById('page-wrapper')
+		    .getElementsByClassName('hidden h-100')[0]
+		    .getAttribute('data-user-id')
+
+});
+let mousewheelCounter = 0
 
     function createDateAsUTC(date) {
         return new Date(
