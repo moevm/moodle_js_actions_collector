@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -18,4 +18,4 @@ jobs:
           sleep 30
       - name: Run tests
         run: |
-          docker exec node-test sh -c "npx mocha test.mjs"
+          docker compose exec node sh -c "npx mocha test.mjs"
