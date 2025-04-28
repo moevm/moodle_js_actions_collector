@@ -210,7 +210,7 @@ let mousewheelCounter = 0
                         if (interactor.interactionElement.includes(e.target.nodeName)) {
                             if(interactor.debug)
                                 console.log(e.target)
-                            interactor.__addInteraction__(e, "interactions", e.nodeName);
+                            interactor.__addInteraction__(e, "interactions", e.target.nodeName);
                         }
                     });
                 }
@@ -223,7 +223,7 @@ let mousewheelCounter = 0
                         e.stopPropagation();
                         if(interactor.debug)
                             console.log(e.target)
-                        interactor.__addInteraction__(e, "conversation", e.nodeName);
+                        interactor.__addInteraction__(e, "conversation", e.target.nodeName);
                     });
                 }
             }
