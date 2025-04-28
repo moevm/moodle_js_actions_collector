@@ -75,20 +75,22 @@
 
     healthCheck(3)
 
-
+let userID
+let courseName
+let userName
 $(document).ready(function(){
 
-	  let userName = document
+	  userName = document
     		  .getElementsByClassName("loggedinas")[0]
     		  .querySelector('strong')
 		      .innerText
 
-    let courseName = document.getElementsByClassName('breadcrumb')[0].getElementsByTagName('a')[0].innerText + "/" + document
+    courseName = document.getElementsByClassName('breadcrumb')[0].getElementsByTagName('a')[0].innerText + "/" + document
             .getElementById('page-header')
             .getElementsByTagName('h1')[0]
             .innerText
 
-    let userID = document
+    userID = document
 		    .getElementById('page-wrapper')
 		    .getElementsByClassName('hidden h-100')[0]
 		    .getAttribute('data-user-id')
