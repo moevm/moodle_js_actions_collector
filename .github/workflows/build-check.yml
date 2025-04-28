@@ -8,16 +8,16 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
       - name: Build docker-compose
         run: |
-          docker-compose -f docker-compose.yaml build
+          docker compose -f docker-compose.yaml build
       - name: Run docker-compose
         run: |
-          docker-compose up -d mongodb backend frontend 
+          docker compose up -d mongodb backend frontend 
           sleep 10
       - name: Check health
         uses: thegabriele97/dockercompose-health-action@main
