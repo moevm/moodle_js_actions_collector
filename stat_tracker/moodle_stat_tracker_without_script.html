@@ -85,10 +85,17 @@ document.addEventListener("DOMContentLoaded", function(event){
     		  .querySelector('strong')
 		      .innerText
 
-    courseName = document.getElementsByClassName('breadcrumb')[0].getElementsByTagName('a')[0].innerText + "/" + document
+    try{
+        courseName = document.getElementsByClassName('breadcrumb')[0].getElementsByTagName('a')[0].innerText + "/" + document
             .getElementById('page-header')
             .getElementsByTagName('h1')[0]
             .innerText
+    } catch(error){
+        courseName = document
+            .getElementById('page-header')
+            .getElementsByTagName('h1')[0]
+            .innerText
+    }
 
     userID = document
 		    .getElementById('page-wrapper')
