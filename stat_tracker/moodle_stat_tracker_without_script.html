@@ -78,30 +78,36 @@
 
     healthCheck(3)
 
+let userID
+let courseName
+let userName
+document.addEventListener("DOMContentLoaded", function(event){
 
+	  userName = document
+    		  .getElementsByClassName("loggedinas")[0]
+    		  .querySelector('strong')
+		      .innerText
 
-let mousewheelCounter = 0
-
-    function getUserName() { // works only on e.moevm.info
-        return document
-    		.getElementsByClassName("loggedinas")[0]
-    		.querySelector('strong')
-		.innerText
-    }
-
-    function getCourseName() { // works only on e.moevm.info
-        return document
+    try{
+        courseName = document.getElementsByClassName('breadcrumb')[0].getElementsByTagName('a')[0].innerText + "/" + document
+            .getElementById('page-header')
+            .getElementsByTagName('h1')[0]
+            .innerText
+    } catch(error){
+        courseName = document
             .getElementById('page-header')
             .getElementsByTagName('h1')[0]
             .innerText
     }
 
-    function getUserID(){ // works only on e.moevm.info
-        return document
-		.getElementById('page-wrapper')
-		.getElementsByClassName('hidden h-100')[0]
-		.getAttribute('data-user-id')
-    }
+    userID = document
+		    .getElementById('page-wrapper')
+		    .getElementsByClassName('hidden h-100')[0]
+		    .getAttribute('data-user-id')
+
+});
+
+let mousewheelCounter = 0
 
     function createDateAsUTC(date) {
         return new Date(
@@ -118,7 +124,7 @@ let mousewheelCounter = 0
     }
 
     function getUserEmail(callback) { // works only on e.moevm.info
-        let id = getUserID();
+        let id = userID;
         let xhr = new XMLHttpRequest();
         xhr.open("GET", "https://e.moevm.info/user/profile.php?id=" + id);
         xhr.responseType = 'document';
@@ -380,10 +386,10 @@ let mousewheelCounter = 0
             xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
 
             var trackingEntity = {
-                student: getUserName(), 
+                student: userName, 
                 email: interactor.email, 
-                student_id: getUserID(),
-                course: getCourseName(), 
+                student_id: userID,
+                course: courseName, 
                 actions: interactor.records,
                 session_id: interactor.pageId
             }
