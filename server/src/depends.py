@@ -11,13 +11,15 @@ from src.core.modules.service.user import UserService
 
 load_dotenv()
 
-user = os.getenv('MONGODB_INITDB_ROOT_USERNAME')
-password = os.getenv('MONGODB_INITDB_ROOT_PASSWORD')
+user = os.getenv('MONGO_INITDB_ROOT_USERNAME')
+password = os.getenv('MONGO_INITDB_ROOT_PASSWORD')
+dbname = os.getenv('MONGO_INITDB_DATABASE')
 
 client = aio_motor.AsyncIOMotorClient(f'mongodb://{user}:{password}@mongodb:27017/?authMechanism=DEFAULT')
-user_service = UserService(MongoUserRepo(client["moodle-statistics"]))
-statistics_service = StatisticsService(MongoStatisticRepo(client["moodle-statistics"]), MongoPageRepo(client["moodle-statistics"]))
-auth_service = AuthService(MongoUserRepo(client["moodle-statistics"]))
+db = client[dbname]
+user_service = UserService(MongoUserRepo(db))
+statistics_service = StatisticsService(MongoStatisticRepo(db), MongoPageRepo(db))
+auth_service = AuthService(MongoUserRepo(db))
 
 
 def get_user_service() -> UserService:
