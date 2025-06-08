@@ -11,9 +11,9 @@ from src.core.modules.service.user import UserService
 
 load_dotenv()
 
-user = os.getenv('MONGO_INITDB_ROOT_USERNAME')
-password = os.getenv('MONGO_INITDB_ROOT_PASSWORD')
-dbname = os.getenv('MONGO_INITDB_DATABASE')
+user = os.getenv('MONGODB_ROOT_USER')
+password = os.getenv('MONGODB_ROOT_PASSWORD')
+dbname = os.getenv('MONGODB_DATABASE')
 
 client = aio_motor.AsyncIOMotorClient(f'mongodb://{user}:{password}@mongodb:27017/?authenticationDatabase=admin')
 db = client[dbname]
