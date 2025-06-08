@@ -15,7 +15,7 @@ user = os.getenv('MONGO_INITDB_ROOT_USERNAME')
 password = os.getenv('MONGO_INITDB_ROOT_PASSWORD')
 dbname = os.getenv('MONGO_INITDB_DATABASE')
 
-client = aio_motor.AsyncIOMotorClient(f'mongodb://{user}:{password}@mongodb:27017/?authMechanism=DEFAULT')
+client = aio_motor.AsyncIOMotorClient(f'mongodb://{user}:{password}@mongodb:27017/?authenticationDatabase=admin')
 db = client[dbname]
 user_service = UserService(MongoUserRepo(db))
 statistics_service = StatisticsService(MongoStatisticRepo(db), MongoPageRepo(db))
