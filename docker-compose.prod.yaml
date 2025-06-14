@@ -14,7 +14,7 @@ services:
     env_file:
       - server/.env
     volumes:
-      - ./${COMPOSE_PROJECT_NAME}-dbdata:/data/db
+      - ../${COMPOSE_PROJECT_NAME}-dbdata:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
     restart: unless-stopped
 
