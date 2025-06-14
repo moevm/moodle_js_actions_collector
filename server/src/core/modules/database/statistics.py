@@ -12,7 +12,7 @@ class MongoStatisticRepo:
     async def get_all_sessions(self, filters: SessionFilter) -> list:
         stats = []
         query = filters.query()
-        for session in await self.client.statistics.find(query).to_list(length=None):
+        for session in await self.client.statistics.find(query).sort({"_id": -1}).to_list(length=None):
             session["_id"] = str(session["_id"])
             session["session_id"] = str(session["session_id"])
             session['actions'] = filter_actions(filters, session['actions'])
