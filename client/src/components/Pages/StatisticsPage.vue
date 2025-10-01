@@ -48,7 +48,13 @@
         <button id="reset-search" class="reset-button" @click="resetSearch">Сброс</button>
       </div>
     </Filters>
-    <StatisticsTable v-if="selectedType === 'table'" :info="statisticsInfo"></StatisticsTable>
+    <StatisticsTable v-if="selectedType === 'table'" 
+      :info="statisticsInfo"
+      :pageSize="pageSize"
+      :pageSizes="pageSizes"
+      :page="page"
+      :count="count">
+    </StatisticsTable>
     <Chart v-else :info="statisticsInfo"></Chart>
   </Navbar>
 </template>
@@ -97,7 +103,11 @@ export default {
       elementType: '',
       elementName: '',
       startSearch: false,
-      params: {}
+      params: {},
+      page: 1,
+      count: 0,
+      pageSize: 10,
+      pageSizes: [5,10,15,20,25]
     };
   },
 
@@ -169,6 +179,29 @@ export default {
   },
 
   methods: {
+    getRequestParams(searchTitle, page, pageSize) {
+      let params = {};
+      if (page) {
+        params["page"] = page - 1;
+      }
+
+      if (pageSize) {
+        params["size"] = pageSize;
+      }
+      return params;
+    },
+
+    handlePageChange(value) {
+      this.page = value;
+      this.getStatistics();
+    },
+
+    handlePageSizeChange(event) {
+      this.pageSize = event.target.value;
+      this.page = 1;
+      this.getStatistics();
+    },
+
     resetBeginDate() {
       this.beginTimestamp = '';
     },
