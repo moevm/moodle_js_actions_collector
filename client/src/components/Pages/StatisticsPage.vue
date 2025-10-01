@@ -48,7 +48,7 @@
         <button id="reset-search" class="reset-button" @click="resetSearch">Сброс</button>
       </div>
     </Filters>
-    <StatisticsTable v-if="selectedType === 'table'" :info="statisticsInfo" v-model:search="search"></StatisticsTable>
+    <StatisticsTable v-if="selectedType === 'table'" :info="statisticsInfo"></StatisticsTable>
     <Chart v-else :info="statisticsInfo"></Chart>
   </Navbar>
 </template>
