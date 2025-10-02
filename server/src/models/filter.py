@@ -17,6 +17,7 @@ class SessionFilter(BaseModel):
     element_type: Optional[str] = Field(Query(default=None, description="element type"))
     element_name: Optional[str] = Field(Query(default=None, description="element name"))
 
+
     def query(self) -> dict:
         filter_dict = {}
         action_filter = {}
@@ -50,4 +51,17 @@ class SessionFilter(BaseModel):
         if self.course_title:
             filter_dict['course'] = {'$regex': self.course_title, '$options': 'i'}
 
+        return filter_dict
+
+
+class RequestParams(BaseModel):
+    page: int,
+    pageSize: int,
+    params: SessionFilter
+
+    def query(self) -> dict:
+        filter_dict = {}
+        filter_dict["page"] = self.page
+        filter_dict["pageSize"] = self.pageSize
+        filter_dict["params"] = self.params
         return filter_dict

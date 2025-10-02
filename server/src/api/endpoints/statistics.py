@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse, FileResponse
 
 from src.core.modules.service.errors import SessionNotFoundError
 from src.depends import get_statistics_service
-from src.models.filter import SessionFilter
+from src.models.filter import RequestParams
 from src.models.session_data import SessionData, CreateSessionData
 from src.models.session_data import PageData, CreatePageData
 
@@ -23,12 +23,32 @@ service = get_statistics_service()
     "/",
     status_code=status.HTTP_200_OK,
     response_description="Get statistics",
-    response_model=List[SessionData],
+    response_model={
+        "totalSessions":int,
+        "sessions":List[SessionData],
+        "totalPages":int,
+        "currentPage":int
+    },
     response_model_by_alias=False
 )
-async def get_all_sessions(params: SessionFilter = Depends()):
+async def get_all_sessions(params: RequestParams = Depends()):
     try:
-        return await service.get_all_sessions(params)
+        return {
+            "totalSessions": 0,
+            "sessions": [],
+            "totalPages": 1,
+            "currentPage": 1
+        }
+        page = params_dict.page
+        pageSize = params_dict.pageSize
+        data = service.get_all_sessions(params.params)
+        last = (page+1)*pageSize if (page+1)*pageSize < len(data) else len(data)
+        return await {
+            "totalSessions": len(data),
+            "sessions": data[page*pageSize:last],
+            "totalPages": len(data)//pageSize + 1,
+            "currentPage": page
+        }
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
