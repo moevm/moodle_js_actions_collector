@@ -33,12 +33,6 @@ service = get_statistics_service()
 )
 async def get_all_sessions(params: RequestParams = Depends()):
     try:
-        return {
-            "totalSessions": 0,
-            "sessions": [],
-            "totalPages": 1,
-            "currentPage": 1
-        }
         page = params_dict.page
         pageSize = params_dict.pageSize
         data = service.get_all_sessions(params.params)
