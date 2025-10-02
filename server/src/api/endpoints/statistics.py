@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Dict, Union
 
 import bson.json_util as json
 from fastapi import APIRouter, HTTPException, Body, Depends
@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse, FileResponse
 
 from src.core.modules.service.errors import SessionNotFoundError
 from src.depends import get_statistics_service
-from src.models.filter import RequestParams
+from src.models.filter import RequestParams, SessionFilter
 from src.models.session_data import SessionData, CreateSessionData
 from src.models.session_data import PageData, CreatePageData
 
@@ -23,16 +23,12 @@ service = get_statistics_service()
     "/",
     status_code=status.HTTP_200_OK,
     response_description="Get statistics",
-    response_model={
-        "totalSessions":int,
-        "sessions":List[SessionData],
-        "totalPages":int,
-        "currentPage":int
-    },
+    response_model=Dict[str, Union[int, List[SessionData]]],
     response_model_by_alias=False
 )
 async def get_all_sessions(params: RequestParams = Depends()):
     try:
+        print(params)
         page = params_dict.page
         pageSize = params_dict.pageSize
         data = service.get_all_sessions(params.params)

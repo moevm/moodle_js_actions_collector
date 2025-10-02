@@ -55,8 +55,8 @@ class SessionFilter(BaseModel):
 
 
 class RequestParams(BaseModel):
-    page: int,
-    pageSize: int,
+    page: int
+    pageSize: int
     params: SessionFilter
 
     def query(self) -> dict:
