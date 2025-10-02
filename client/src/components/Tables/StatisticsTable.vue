@@ -1,12 +1,9 @@
 <template>
-  <v-data-table
+  <v-data-table-virtual
     class="custom-table"
     :headers="headers"
     :items="info"
-    item-value="number"
-    outlined
-    v-model="selected"
-    show-select
+    fixed-header
   >
 
     <template v-slot:[`item.FIO`]="{ item }">
@@ -16,7 +13,7 @@
     <template v-slot:[`item.course`]="{ item }">
       <p align="start">{{ item.course }}</p>
     </template>
-  </v-data-table>
+  </v-data-table-virtual>
 </template>
 
 <script>

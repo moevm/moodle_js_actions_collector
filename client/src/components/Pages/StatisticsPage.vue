@@ -48,7 +48,28 @@
         <button id="reset-search" class="reset-button" @click="resetSearch">Сброс</button>
       </div>
     </Filters>
-    <StatisticsTable v-if="selectedType === 'table'" :info="statisticsInfo" v-model:search="search"></StatisticsTable>
+    <div class="col-md-12">
+      <div class="mb-3">
+        Items per Page:
+        <select v-model="pageSize" @change="handlePageSizeChange($event)">
+          <option v-for="size in pageSizes" :key="size" :value="size">
+            {{ size }}
+          </option>
+        </select>
+      </div>
+      <b-pagination
+        v-model="page"
+        :total-rows="count"
+        :per-page="pageSize"
+        size="lg"
+        first-number
+        last-number
+        @change="handlePageChange"
+      ></b-pagination>
+  </div>
+    <StatisticsTable v-if="selectedType === 'table'" 
+      :info="statisticsInfo">
+    </StatisticsTable>
     <Chart v-else :info="statisticsInfo"></Chart>
   </Navbar>
 </template>
@@ -97,7 +118,12 @@ export default {
       elementType: '',
       elementName: '',
       startSearch: false,
-      params: {}
+      params: {},
+      page: 1,
+      count: 1,
+      pageSize: 10,
+      pageSizes: [5,10,15,20,25,-1],
+      totalPages: 1,
     };
   },
 
@@ -169,6 +195,17 @@ export default {
   },
 
   methods: {
+    handlePageChange(value) {
+      this.page = value;
+      this.getStatistics();
+    },
+
+    handlePageSizeChange(event) {
+      this.pageSize = event.target.value;
+      this.page = 1;
+      this.getStatistics();
+    },
+
     resetBeginDate() {
       this.beginTimestamp = '';
     },
@@ -191,6 +228,7 @@ export default {
       this.eventType = '';
       this.elementType = '';
       this.elementName = '';
+      this.page = 1;
       if (this.startSearch === true) {
         this.getStatistics();
         this.startSearch = false;
@@ -208,7 +246,7 @@ export default {
         action_type: this.actionType,
         event_type: this.eventType,
         element_type: this.elementType,
-        element_name: this.elementName
+        element_name: this.elementName,
       }
 
       if (this.beginTimestamp.length === 0 && this.endTimestamp.length === 0) {
@@ -233,11 +271,18 @@ export default {
 
       Object.assign(this.params, searchParams)
 
+      const totalParams = {
+        page: this.page,
+        pageSize: this.pageSize,
+        params: this.params,
+      }
+
       axios
-          .get(STAT_URL, {params: this.params})
+          .get(STAT_URL, {params: totalParams})
           .then((response) => {
             console.log(response);
-            response.data.forEach(element => {
+            const {totalSessions, sessions, totalPages, currentPage} = response.data;
+            sessions.forEach(element => {
               let firstLayer = {
                 FIO: element.student,
                 course: element.course,
@@ -260,6 +305,9 @@ export default {
                 secondLayer.Date = dateTime;
                 this.statisticsInfo.push(secondLayer);
               })
+              this.page = currentPage;
+              this.count = totalSessions;
+              this.totalPages = totalPages;
             });
           })
           .catch((error) => {
