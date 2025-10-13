@@ -11,13 +11,15 @@ class MongoStatisticRepo:
 
     async def get_all_sessions(self, filters: SessionFilter) -> list:
         stats = []
-        query = filters.query()
+        query, pages = filters.query()
+        start = (pages['page']-1)*pages['pageSize']
+        end = pages['page']*pages['pageSize']
         for session in await self.client.statistics.find(query).to_list(length=None):
             session["_id"] = str(session["_id"])
             session["session_id"] = str(session["session_id"])
             session['actions'] = filter_actions(filters, session['actions'])
             stats.append(session)
-        return stats
+        return stats[start:min(end,len(stats))]
 
     async def get_session(self, record_id: str) -> dict:
         stat = await self.client.statistics.find_one({"_id": ObjectId(record_id)})

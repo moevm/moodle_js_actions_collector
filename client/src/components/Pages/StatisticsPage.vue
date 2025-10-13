@@ -239,6 +239,8 @@ export default {
       this.statisticsInfo = []
       this.params = {}
       const searchParams = {
+        page: this.page,
+        pageSize: this.pageSize,
         student_id: Number(this.ID),
         student_name: this.FIO,
         student_email: this.email,
@@ -247,6 +249,11 @@ export default {
         event_type: this.eventType,
         element_type: this.elementType,
         element_name: this.elementName,
+      }
+
+      this.params = {
+        page: this.page,
+        pageSize:this.pageSize
       }
 
       if (this.beginTimestamp.length === 0 && this.endTimestamp.length === 0) {
@@ -269,20 +276,14 @@ export default {
         }
       }
 
+
       Object.assign(this.params, searchParams)
 
-      const totalParams = {
-        page: this.page,
-        pageSize: this.pageSize,
-        params: this.params,
-      }
-
       axios
-          .get(STAT_URL, {params: totalParams})
+          .get(STAT_URL, {params: searchParams})
           .then((response) => {
             console.log(response);
-            const {totalSessions, sessions, totalPages, currentPage} = response.data;
-            sessions.forEach(element => {
+            response.data.forEach(element => {
               let firstLayer = {
                 FIO: element.student,
                 course: element.course,
@@ -305,9 +306,6 @@ export default {
                 secondLayer.Date = dateTime;
                 this.statisticsInfo.push(secondLayer);
               })
-              this.page = currentPage;
-              this.count = totalSessions;
-              this.totalPages = totalPages;
             });
           })
           .catch((error) => {
