@@ -23,7 +23,7 @@ service = get_statistics_service()
     "/",
     status_code=status.HTTP_200_OK,
     response_description="Get statistics",
-    response_model=List[SessionData],
+    response_model=List,
     response_model_by_alias=False
 )
 async def get_all_sessions(params: SessionFilter = Depends()):
