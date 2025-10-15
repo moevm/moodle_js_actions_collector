@@ -49,6 +49,9 @@
       </div>
     </Filters>
     <div class="col-md-12">
+      <button @click="prevPage">
+        Previous
+      </button>
       <div class="mb-3">
         Items per Page:
         <select v-model="pageSize" @change="handlePageSizeChange($event)">
@@ -57,15 +60,9 @@
           </option>
         </select>
       </div>
-      <b-pagination
-        v-model="page"
-        :total-rows="count"
-        :per-page="pageSize"
-        size="lg"
-        first-number
-        last-number
-        @change="handlePageChange"
-      ></b-pagination>
+      <button @click="nextPage">
+        Next
+      </button>
   </div>
     <StatisticsTable v-if="selectedType === 'table'" 
       :info="statisticsInfo">
@@ -195,9 +192,18 @@ export default {
   },
 
   methods: {
-    handlePageChange(value) {
-      this.page = value;
-      this.getStatistics();
+    prevPage() {
+      if (this.page != 1){
+        this.page = this.page - 1;
+        this.getStatistics();
+      }
+    },
+
+    nextPage() {
+      if (this.page != this.totalPages){
+        this.page = this.page + 1;
+        this.getStatistics();
+      }
     },
 
     handlePageSizeChange(event) {
@@ -283,7 +289,10 @@ export default {
           .get(STAT_URL, {params: searchParams})
           .then((response) => {
             console.log(response);
-            response.data.forEach(element => {
+            let stats = response.data[0]
+            this.count = response.data[1]
+            this.totalPages = Math.ceil(this.count/this.pageSize)
+            stats.forEach(element => {
               let firstLayer = {
                 FIO: element.student,
                 course: element.course,
