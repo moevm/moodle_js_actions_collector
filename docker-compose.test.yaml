@@ -40,6 +40,8 @@ services:
   mongodb:
     container_name: mongodb
     image: bitnamilegacy/mongodb:8.0.13
+    environment:
+      TEST_RUN: true
     env_file:
       - server/.env
     volumes:
