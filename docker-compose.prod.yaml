@@ -10,7 +10,7 @@ services:
       - server/.env
 
   mongodb:
-    image: bitnami/mongodb:8.0
+    image: bitnamilegacy/mongodb:8.0.13
     env_file:
       - server/.env
     volumes:

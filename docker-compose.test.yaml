@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   selenium:
     container_name: selenium-test
@@ -41,7 +39,7 @@ services:
 
   mongodb:
     container_name: mongodb
-    image: mongodb/mongodb-community-server:6.0-ubi8
+    image: bitnamilegacy/mongodb:8.0.13
     env_file:
       - server/.env
     volumes:
