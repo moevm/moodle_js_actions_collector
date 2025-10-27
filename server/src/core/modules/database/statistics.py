@@ -15,7 +15,7 @@ class MongoStatisticRepo:
         start = (pages['page']-1)*pages['pageSize']
         total_rows = await self.client.statistics.count_documents(query)
         pageSize = total_rows if pages['pageSize'] == -1 else pages['pageSize']
-        for session in await self.client.statistics.find(query).skip(start).limit(pageSize).to_list(length=None):
+        for session in await self.client.statistics.find(query).sort({"_id": -1}).skip(start).limit(pageSize).to_list(length=None):
             session["_id"] = str(session["_id"])
             session["session_id"] = str(session["session_id"])
             session['actions'] = filter_actions(filters, session['actions'])
