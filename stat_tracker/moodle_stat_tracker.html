@@ -93,6 +93,7 @@
             }
 
             window.onbeforeunload = function(e) {
+                interactor.__addInteraction__("page", "close", "page")
                 interactor.__sendInteractions__();
             };
 
@@ -102,7 +103,19 @@
         __addInteraction__: function(e, type, element_type) {
             let interactor = this;
 
-            if (e.type != "scroll") {
+            if (e === "page"){
+                trackingEntity = {
+                    timestamp: createDateAsUTC(new Date()).toISOString(),
+                    page: interactor.session.page.href,
+                    element_type: element_type.toLowerCase(),
+                    element_name: e,
+                    action_type: type,
+                    event_type: type + " " + e,
+                    element_html: "undefined"
+                }
+                interactor.records.push(trackingEntity);
+            }
+            else if (e.type != "scroll") {
                 let name;
                 if (e.target)
                     if (element_type.toLowerCase() == 'button')
@@ -140,8 +153,7 @@
                     interactor.records = []
 
                 }
-            }
-            if (e.type == "scroll" && mousewheelCounter == 1) {
+            } else if (e.type == "scroll" && mousewheelCounter == 1) {
                 mousewheelCounter++
                 let name;
                 if (e.target)
@@ -207,7 +219,7 @@
                 },
                 endpoint: interactor.endpoint
             };
-
+            interactor.__addInteraction__("page", "open", "page")
             return interactor;
         },
 
@@ -245,7 +257,7 @@
                 email: interactor.email,
                 student_id: userID,
                 course: courseName,
-                actions: interactor.records,
+                actions: interactor.records.reverse(),
                 session_id: interactor.pageId
             }
             console.log(trackingEntity)
@@ -276,6 +288,7 @@
             debug: true
         });
         window.addEventListener('beforeunload', (event) => {
+            interactor.__addInteraction__("page", "close", "page")
             interactions.__sendInteractions__();
         });
     }
