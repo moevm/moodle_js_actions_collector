@@ -6,28 +6,6 @@
     let trackingEntity
     let cur_url = window.location.href
     let mousewheelCounter = 0
-
-    userName = document
-            .getElementsByClassName("loggedinas")[0]
-            .querySelector('strong')
-            .innerText
-
-        try {
-            courseName = document.getElementsByClassName('breadcrumb')[0].getElementsByTagName('a')[0].innerText + "/" + document
-                .getElementById('page-header')
-                .getElementsByTagName('h1')[0]
-                .innerText
-        } catch (error) {
-            courseName = document
-                .getElementById('page-header')
-                .getElementsByTagName('h1')[0]
-                .innerText
-        }
-
-        userID = document
-            .getElementById('page-wrapper')
-            .getElementsByClassName('hidden h-100')[0]
-            .getAttribute('data-user-id')
     
     healthCheck(3)
 
