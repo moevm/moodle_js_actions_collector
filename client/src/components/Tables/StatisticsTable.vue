@@ -36,7 +36,7 @@ export default {
         { title: "ID", key: "studentId", sortable: false, align: "center" },
         { title: "ФИО", key: "FIO", sortable: false, align: "center" },
         { title: "Почта", key: "email", sortable: false, align: "center" },
-        { title: "ID вкладки", key: "tabID", sortable: false: align: "center" },
+        { title: "ID вкладки", key: "tabID", sortable: false, align: "center" },
         { title: "Дата", key: "date", sortable: false, align: "center" },
         { title: "Время", key: "time", sortable: false, align: "center" },
         { title: "Название курса", key: "course", sortable: false, align: "center"},
