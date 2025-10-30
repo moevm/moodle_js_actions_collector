@@ -359,7 +359,7 @@
             .getElementsByClassName('hidden h-100')[0]
             .getAttribute('data-user-id')
 
-        tabID = `id-${createDateAsUTC(new Date()).toString(36)}-${Math.random().toString(36).slice(2)}`
+        tabID = `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
 
     });
 

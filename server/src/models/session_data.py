@@ -118,6 +118,7 @@ class CreateSessionData(BaseModel):
     student: str = Field(...)
     email: EmailStr = Field(...)
     course: str = Field(...)
+    tabID: str = Field(...)
     actions: List[Payload] = Field(default_factory=list)
 
     class Config:
