@@ -186,6 +186,7 @@ export default {
       this.ID = '';
       this.FIO = '';
       this.email = '';
+      this.tabID = '';
       this.course = '';
       this.actionType = '';
       this.eventType = '';
@@ -204,6 +205,7 @@ export default {
         student_id: Number(this.ID),
         student_name: this.FIO,
         student_email: this.email,
+        tabID: this.tabID,
         course_title: this.course,
         action_type: this.actionType,
         event_type: this.eventType,
@@ -242,7 +244,8 @@ export default {
                 FIO: element.student,
                 course: element.course,
                 studentId: element.student_id,
-                email: element.email
+                email: element.email,
+                tabID: element.tabID
               };
               element.actions.forEach(action =>{
                 let secondLayer = {...firstLayer};

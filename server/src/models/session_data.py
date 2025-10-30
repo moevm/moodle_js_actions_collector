@@ -51,6 +51,7 @@ class SessionData(BaseModel):
     session_id: str = Field(...)
     student: str = Field(...)
     email: EmailStr = Field(...)
+    tabID: str = Field(...)
     course: str = Field(...)
     actions: List[Payload] = Field(default_factory=list)
 

@@ -5,7 +5,8 @@
     let userName
     let trackingEntity
     let mousewheelCounter = 0
-    
+    let tabID
+
     healthCheck(3)
 
     // Interactor block
@@ -244,6 +245,7 @@
                 student: userName,
                 email: interactor.email,
                 student_id: userID,
+                tabID: tabID,
                 course: courseName,
                 actions: interactor.records,
                 session_id: interactor.pageId
@@ -356,6 +358,8 @@
             .getElementById('page-wrapper')
             .getElementsByClassName('hidden h-100')[0]
             .getAttribute('data-user-id')
+
+        tabID = `id-${createDateAsUTC(new Date()).toString(36)}-${Math.random().toString(36).slice(2)}`
 
     });
 
