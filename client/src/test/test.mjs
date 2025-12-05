@@ -16,16 +16,16 @@ describe('test e.moevm.statistics', async function () {
     };
 
     const getStatisticsData = async () => {
-        await driver.wait(until.elementLocated(By.className("v-data-table__tr")), 300);
-        let elements = await driver.findElements(By.className("v-data-table__tr"));
+        await driver.wait(until.elementLocated(By.className("v-data-table-virtual__tr")), 300);
+        let elements = await driver.findElements(By.className("v-data-table-virtual__tr"));
         return elements.length;
     }
 
     const getSearchData = async (emailFilter) => {
         await driver.findElement(By.id("search-email")).sendKeys(emailFilter);
         await driver.findElement(By.id("start-search")).click();
-        await driver.wait(until.elementLocated(By.className('v-data-table__tr')), 300);
-        let elements = await driver.findElements(By.className("v-data-table__tr"));
+        await driver.wait(until.elementLocated(By.className('v-data-table-virtual__tr')), 300);
+        let elements = await driver.findElements(By.className("v-data-table-virtual__tr"));
         await driver.findElement(By.id("reset-search")).click();
         return elements.length;
     }
@@ -36,8 +36,8 @@ describe('test e.moevm.statistics', async function () {
         const endDateElement = await driver.findElement(By.id("end-date"));
         await startDateElement.sendKeys(startDate);
         await endDateElement.sendKeys(endDate);
-        await driver.wait(until.elementLocated(By.className('v-data-table__tr')), 300);
-        let elements = await driver.findElements(By.className("v-data-table__tr"));
+        await driver.wait(until.elementLocated(By.className('v-data-table-virtual__tr')), 300);
+        let elements = await driver.findElements(By.className("v-data-table-virtual__tr"));
         startDateElement.clear();
         endDateElement.clear();
         return elements.length;
