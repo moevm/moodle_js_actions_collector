@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+  from unittest.mock import Mock
 import pytest
 from src.core.modules.database.statistics import MongoStatisticRepo
 from src.models.filter import SessionFilter
@@ -122,6 +122,8 @@ async def test_delete_session_fail():
 
 def create_mock_filter():
     mock_filter = SessionFilter(end_timestamp=None)
+    mock_filter.page = 1
+    mock_filter.pageSize = 5
     mock_filter.begin_timestamp = None
     mock_filter.student_id = None
     mock_filter.student_name = None
