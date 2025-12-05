@@ -145,7 +145,7 @@ def create_mock_filter():
     return mock_filter
 
 
-async def find_to_list():
+def find_to_list():
     return [{
         "_id": "1", "session_id": "2", "actions": [{
             "timestamp": "2024-02-02T00:01",
