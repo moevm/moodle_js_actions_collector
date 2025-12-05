@@ -9,7 +9,8 @@ from src.core.modules.database.errors import RepoNotFoundError
 async def test_get_all_sessions():
     # Arrange
     mock_client = Mock()
-    mock_client.statistics.find.return_value.sort.return_value.return_value.to_list = AsyncMock(
+    mock_client.statistics.count_documents = AsyncMock(return_value=100)
+    mock_client.statistics.find.return_value.sort.return_value.skip.return_value.limit.return_value.to_list = AsyncMock(
         return_value=find_to_list()
     )
     mock_filter = create_mock_filter()
