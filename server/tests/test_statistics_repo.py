@@ -1,4 +1,4 @@
-  from unittest.mock import Mock
+from unittest.mock import Mock
 import pytest
 from src.core.modules.database.statistics import MongoStatisticRepo
 from src.models.filter import SessionFilter
