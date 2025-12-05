@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, AsyncMock
 import pytest
 from src.core.modules.database.statistics import MongoStatisticRepo
 from src.models.filter import SessionFilter
@@ -9,13 +9,15 @@ from src.core.modules.database.errors import RepoNotFoundError
 async def test_get_all_sessions():
     # Arrange
     mock_client = Mock()
-    mock_client.statistics.find.return_value.sort.return_value.to_list.return_value = find_to_list()
+    mock_client.statistics.find.return_value.sort.return_value.to_list.return_value = AsyncMock(
+        return_value=find_to_list()
+    )
     mock_filter = create_mock_filter()
 
     repository = MongoStatisticRepo(mock_client)
     
     # Act
-    result = repository.get_all_sessions(mock_filter)
+    result = await repository.get_all_sessions(mock_filter)
 
     # Assert
     assert len(result) == 1
