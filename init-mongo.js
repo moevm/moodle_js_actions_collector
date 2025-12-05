@@ -48,7 +48,7 @@ if (process.env.TEST_RUN == 'true'){
             "session_id": ObjectId("6648756f964c1253e72202db"),
             "email": "diana@mail.ru",
             "course": "Курс молодого бойца",
-            "url": "https://e.moevm.info/course/view.php?id=2"
+            "url": "https://e.moevm.info/course/view.php?id=2",
             "actions": [
                 {
                     "timestamp": new Date("2024-02-02T14:00:00"),
@@ -66,7 +66,7 @@ if (process.env.TEST_RUN == 'true'){
             "email": "daniil@mail.ru",
             "session_id": ObjectId("6648756f964c1253e72202dc"),
             "course": "Курс молодого бойца",
-            "url": "https://e.moevm.info/course/view.php?id=2"
+            "url": "https://e.moevm.info/course/view.php?id=2",
             "actions": [
                 {
                     "timestamp": new Date("2024-02-02T14:00:00"),
