@@ -15,7 +15,7 @@ async def test_get_all_sessions():
     repository = MongoStatisticRepo(mock_client)
     
     # Act
-    result = await repository.get_all_sessions(mock_filter)
+    result = repository.get_all_sessions(mock_filter)
 
     # Assert
     assert len(result) == 1
