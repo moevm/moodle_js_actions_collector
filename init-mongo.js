@@ -46,7 +46,7 @@ if (process.env.TEST_RUN == 'true'){
             "student_id": 2071,
             "student": "Диана Романенко",
             "session_id": ObjectId("6648756f964c1253e72202db"),
-            "tabID": "1"
+            "tabID": "1",
             "email": "diana@mail.ru",
             "course": "Курс молодого бойца",
             "actions": [
@@ -65,7 +65,7 @@ if (process.env.TEST_RUN == 'true'){
             "student": "Беззубов Даниил",
             "email": "daniil@mail.ru",
             "session_id": ObjectId("6648756f964c1253e72202dc"),
-            "tabID": "2"
+            "tabID": "2",
             "course": "Курс молодого бойца",
             "actions": [
                 {
