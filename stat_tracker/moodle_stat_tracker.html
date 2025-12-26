@@ -275,6 +275,7 @@
 
     // Tracker function block
     async function initTracker() {
+        let interactor = this;
         let pageId = await sendPageInfo();
         let interactions = new Interactor({
             trackAll: false,
