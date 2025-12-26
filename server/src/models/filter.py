@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field
 
 
 class SessionFilter(BaseModel):
+    page: int
+    pageSize: int
     begin_timestamp: Optional[datetime] = Field(Query(default=None, description="start date"))
     end_timestamp: Optional[datetime] = Field(Query(default=None, description="stop date"))
     student_id: Optional[int] = Field(Query(default=None, description="student moodle id"))
@@ -17,9 +19,14 @@ class SessionFilter(BaseModel):
     element_type: Optional[str] = Field(Query(default=None, description="element type"))
     element_name: Optional[str] = Field(Query(default=None, description="element name"))
 
-    def query(self) -> dict:
+
+    def query(self):
         filter_dict = {}
         action_filter = {}
+        pages = {
+            'page': self.page,
+            'pageSize': self.pageSize
+        }
         if self.begin_timestamp or self.end_timestamp:
             timestamp_filter = {}
             if self.begin_timestamp:
@@ -50,4 +57,4 @@ class SessionFilter(BaseModel):
         if self.course_title:
             filter_dict['course'] = {'$regex': self.course_title, '$options': 'i'}
 
-        return filter_dict
+        return filter_dict, pages

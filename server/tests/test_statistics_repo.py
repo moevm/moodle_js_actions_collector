@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, AsyncMock
 import pytest
 from src.core.modules.database.statistics import MongoStatisticRepo
 from src.models.filter import SessionFilter
@@ -9,17 +9,22 @@ from src.core.modules.database.errors import RepoNotFoundError
 async def test_get_all_sessions():
     # Arrange
     mock_client = Mock()
-    mock_client.statistics.find.return_value.sort.return_value.to_list.return_value = find_to_list()
+    mock_client.statistics = Mock()
+    mock_client.statistics.count_documents = AsyncMock(return_value=100)
+    mock_client.statistics.find.return_value.sort.return_value.skip.return_value.limit.return_value.to_list = AsyncMock(
+        return_value=find_to_list()
+    )
     mock_filter = create_mock_filter()
 
     repository = MongoStatisticRepo(mock_client)
     
     # Act
     result = await repository.get_all_sessions(mock_filter)
+    stats = result[0]
 
     # Assert
-    assert len(result) == 1
-    assert result[0]["session_id"] == "2"
+    assert len(stats) == 1
+    assert stats[0]["session_id"] == "2"
 
 
 @pytest.mark.asyncio
@@ -121,7 +126,10 @@ async def test_delete_session_fail():
 
 
 def create_mock_filter():
-    mock_filter = SessionFilter(end_timestamp=None)
+    mock_filter = Mock()
+    mock_filter.page = 1
+    mock_filter.pageSize = 5
+    mock_filter.end_timestamp = None
     mock_filter.begin_timestamp = None
     mock_filter.student_id = None
     mock_filter.student_name = None
@@ -131,10 +139,14 @@ def create_mock_filter():
     mock_filter.event_type = None
     mock_filter.element_type = None
     mock_filter.element_name = None
+    mock_filter.query.return_value = (
+        {},
+        {"page": mock_filter.page, "pageSize": mock_filter.pageSize},
+    )
     return mock_filter
 
 
-async def find_to_list():
+def find_to_list():
     return [{
         "_id": "1", "session_id": "2", "actions": [{
             "timestamp": "2024-02-02T00:01",

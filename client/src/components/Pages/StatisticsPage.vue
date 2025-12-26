@@ -48,7 +48,25 @@
         <button id="reset-search" class="reset-button" @click="resetSearch">Сброс</button>
       </div>
     </Filters>
-    <StatisticsTable v-if="selectedType === 'table'" :info="statisticsInfo" v-model:search="search"></StatisticsTable>
+    <div class="col-md-12">
+      <button @click="prevPage">
+        Previous
+      </button>
+      <div class="mb-3">
+        Items per Page:
+        <select v-model="pageSize" @change="handlePageSizeChange($event)">
+          <option v-for="size in pageSizes" :key="size" :value="size">
+            {{ size }}
+          </option>
+        </select>
+      </div>
+      <button @click="nextPage">
+        Next
+      </button>
+  </div>
+    <StatisticsTable v-if="selectedType === 'table'" 
+      :info="statisticsInfo">
+    </StatisticsTable>
     <Chart v-else :info="statisticsInfo"></Chart>
   </Navbar>
 </template>
@@ -97,7 +115,12 @@ export default {
       elementType: '',
       elementName: '',
       startSearch: false,
-      params: {}
+      params: {},
+      page: 1,
+      count: 1,
+      pageSize: 10,
+      pageSizes: [5,10,15,20,25,-1],
+      totalPages: 1,
     };
   },
 
@@ -169,6 +192,26 @@ export default {
   },
 
   methods: {
+    prevPage() {
+      if (this.page != 1){
+        this.page = this.page - 1;
+        this.getStatistics();
+      }
+    },
+
+    nextPage() {
+      if (this.page != this.totalPages){
+        this.page = this.page + 1;
+        this.getStatistics();
+      }
+    },
+
+    handlePageSizeChange(event) {
+      this.pageSize = event.target.value;
+      this.page = 1;
+      this.getStatistics();
+    },
+
     resetBeginDate() {
       this.beginTimestamp = '';
     },
@@ -193,6 +236,7 @@ export default {
       this.eventType = '';
       this.elementType = '';
       this.elementName = '';
+      this.page = 1;
       if (this.startSearch === true) {
         this.getStatistics();
         this.startSearch = false;
@@ -203,6 +247,8 @@ export default {
       this.statisticsInfo = []
       this.params = {}
       const searchParams = {
+        page: this.page,
+        pageSize: this.pageSize,
         student_id: Number(this.ID),
         student_name: this.FIO,
         student_email: this.email,
@@ -212,7 +258,12 @@ export default {
         action_type: this.actionType,
         event_type: this.eventType,
         element_type: this.elementType,
-        element_name: this.elementName
+        element_name: this.elementName,
+      }
+
+      this.params = {
+        page: this.page,
+        pageSize:this.pageSize
       }
 
       if (this.beginTimestamp.length === 0 && this.endTimestamp.length === 0) {
@@ -235,13 +286,17 @@ export default {
         }
       }
 
+
       Object.assign(this.params, searchParams)
 
       axios
-          .get(STAT_URL, {params: this.params})
+          .get(STAT_URL, {params: searchParams})
           .then((response) => {
             console.log(response);
-            response.data.forEach(element => {
+            let stats = response.data[0]
+            this.count = response.data[1]
+            this.totalPages = Math.ceil(this.count/this.pageSize)
+            stats.forEach(element => {
               let firstLayer = {
                 FIO: element.student,
                 course: element.course,
