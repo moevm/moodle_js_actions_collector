@@ -4,8 +4,10 @@
     let courseName
     let userName
     let trackingEntity
+    let cur_url = window.location.href
     let mousewheelCounter = 0
-    
+    let tabID
+
     healthCheck(3)
 
     // Interactor block
@@ -93,6 +95,7 @@
             }
 
             window.onbeforeunload = function(e) {
+                interactor.__addInteraction__("page", "close", "page")
                 interactor.__sendInteractions__();
             };
 
@@ -102,7 +105,19 @@
         __addInteraction__: function(e, type, element_type) {
             let interactor = this;
 
-            if (e.type != "scroll") {
+            if (e === "page"){
+                trackingEntity = {
+                    timestamp: createDateAsUTC(new Date()).toISOString(),
+                    page: interactor.session.page.href,
+                    element_type: element_type.toLowerCase(),
+                    element_name: e,
+                    action_type: type,
+                    event_type: type + " " + e,
+                    element_html: "undefined"
+                }
+                interactor.records.push(trackingEntity);
+            }
+            else if (e.type != "scroll") {
                 let name;
                 if (e.target)
                     if (element_type.toLowerCase() == 'button')
@@ -140,8 +155,7 @@
                     interactor.records = []
 
                 }
-            }
-            if (e.type == "scroll" && mousewheelCounter == 1) {
+            } else if (e.type == "scroll" && mousewheelCounter == 1) {
                 mousewheelCounter++
                 let name;
                 if (e.target)
@@ -207,7 +221,7 @@
                 },
                 endpoint: interactor.endpoint
             };
-
+            interactor.__addInteraction__("page", "open", "page")
             return interactor;
         },
 
@@ -244,8 +258,10 @@
                 student: userName,
                 email: interactor.email,
                 student_id: userID,
+                tabID: tabID,
                 course: courseName,
-                actions: interactor.records,
+                url: cur_url,
+                actions: interactor.records.reverse(),
                 session_id: interactor.pageId
             }
             console.log(trackingEntity)
@@ -259,6 +275,7 @@
 
     // Tracker function block
     async function initTracker() {
+        let interactor = this;
         let pageId = await sendPageInfo();
         let interactions = new Interactor({
             trackAll: false,
@@ -276,6 +293,7 @@
             debug: true
         });
         window.addEventListener('beforeunload', (event) => {
+            interactor.__addInteraction__("page", "close", "page")
             interactions.__sendInteractions__();
         });
     }
@@ -356,6 +374,8 @@
             .getElementById('page-wrapper')
             .getElementsByClassName('hidden h-100')[0]
             .getAttribute('data-user-id')
+
+        tabID = `id-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
     });
 

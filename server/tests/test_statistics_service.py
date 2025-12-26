@@ -14,7 +14,7 @@ async def test_get_all_sessions_success():
     service = StatisticsService(mock_repo, None)
     
     # Act
-    result = await service.get_all_sessions(SessionFilter())
+    result = await service.get_all_sessions(SessionFilter(page=1,pageSize=5))
 
     # Assert
     assert len(result) == 1
@@ -33,7 +33,7 @@ async def test_get_all_sessions_fail():
     
     try:
         # Act
-        result = await service.get_all_sessions(SessionFilter())
+        result = await service.get_all_sessions(SessionFilter(page=1,pageSize=5))
     except Exception as e:
         # Assert
         assert isinstance(e, RepoNotFoundError)

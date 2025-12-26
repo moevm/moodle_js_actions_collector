@@ -1,12 +1,9 @@
 <template>
-  <v-data-table
+  <v-data-table-virtual
     class="custom-table"
     :headers="headers"
     :items="info"
-    item-value="number"
-    outlined
-    v-model="selected"
-    show-select
+    fixed-header
   >
 
     <template v-slot:[`item.FIO`]="{ item }">
@@ -16,7 +13,7 @@
     <template v-slot:[`item.course`]="{ item }">
       <p align="start">{{ item.course }}</p>
     </template>
-  </v-data-table>
+  </v-data-table-virtual>
 </template>
 
 <script>
@@ -36,9 +33,11 @@ export default {
         { title: "ID", key: "studentId", sortable: false, align: "center" },
         { title: "ФИО", key: "FIO", sortable: false, align: "center" },
         { title: "Почта", key: "email", sortable: false, align: "center" },
+        { title: "ID вкладки", key: "tabID", sortable: false, align: "center" },
         { title: "Дата", key: "date", sortable: false, align: "center" },
         { title: "Время", key: "time", sortable: false, align: "center" },
         { title: "Название курса", key: "course", sortable: false, align: "center"},
+        { title: "URL-адрес", key: "url", sortable: false, align: "center"},
         { title: "Тип действия", key: "typeAction", sortable: false, align: "center" },
         { title: "Тип события", key: "eventType", sortable: false, align: "center" },
         { title: "Тип элемента", key: "elementType", sortable: false, align: "center" },
