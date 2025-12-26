@@ -4,6 +4,7 @@
     let courseName
     let userName
     let trackingEntity
+    let cur_url = window.location.href
     let mousewheelCounter = 0
     let tabID
 
@@ -247,6 +248,7 @@
                 student_id: userID,
                 tabID: tabID,
                 course: courseName,
+                url: cur_url,
                 actions: interactor.records,
                 session_id: interactor.pageId
             }

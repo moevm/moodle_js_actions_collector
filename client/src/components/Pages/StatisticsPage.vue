@@ -188,6 +188,7 @@ export default {
       this.email = '';
       this.tabID = '';
       this.course = '';
+      this.url = '';
       this.actionType = '';
       this.eventType = '';
       this.elementType = '';
@@ -207,6 +208,7 @@ export default {
         student_email: this.email,
         tabID: this.tabID,
         course_title: this.course,
+        url: this.url,
         action_type: this.actionType,
         event_type: this.eventType,
         element_type: this.elementType,
@@ -243,6 +245,7 @@ export default {
               let firstLayer = {
                 FIO: element.student,
                 course: element.course,
+                url: element.url,
                 studentId: element.student_id,
                 email: element.email,
                 tabID: element.tabID
