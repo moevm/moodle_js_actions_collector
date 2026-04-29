@@ -116,8 +116,21 @@
                     element_html: "undefined"
                 }
                 interactor.records.push(trackingEntity);
-            }
-            else if (e.type != "scroll") {
+            } else if (e.type === 'visibilitychange') {
+                trackingEntity = {
+                    timestamp: createDateAsUTC(new Date()).toISOString(),
+                    page: interactor.session.page.href,
+                    element_type: element_type.toLowerCase(),
+                    element_name: 'page',
+                    action_type: type, // this will be 'visible' or 'hidden'
+                    event_type: e.type,
+                    element_html: "undefined"
+                }
+                interactor.records.push(trackingEntity);
+                if (interactor.debug) {
+                    console.log("Visibility change tracked:", trackingEntity);
+                }
+            } else if (e.type != "scroll") {
                 let name;
                 if (e.target)
                     if (element_type.toLowerCase() == 'button')
