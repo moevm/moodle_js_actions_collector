@@ -20,12 +20,16 @@ services:
       timeout: 1s
       retries: 2
       start_period: 4s
+    cpuset: ${CONTAINER_CPU:-0-1}
+    mem_limit: ${CONTAINER_MEMORY:-1G}
 
   mongodb:
     container_name: mongodb 
-    image: bitnamilegacy/mongodb:8.0.13
+    image: bitnamilegacy/mongodb:8-noble
     env_file: 
       - server/.env
+    command:
+      - '--wiredTigerCacheSizeGB=${MONGODB_CACHE_SIZE:-1}'
     volumes:
       - mongo-data:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
@@ -40,6 +44,8 @@ services:
       timeout: 1s
       retries: 2
       start_period: 4s
+    cpuset: ${CONTAINER_CPU:-0-1}
+    mem_limit: ${CONTAINER_MEMORY:-1G}
 
   frontend:
     container_name: client
@@ -59,10 +65,12 @@ services:
       timeout: 1s
       retries: 2
       start_period: 4s
+    cpuset: ${CONTAINER_CPU:-0-1}
+    mem_limit: ${CONTAINER_MEMORY:-1G}
 
   moodle:
     container_name: moodle
-    image: bitnami/moodle
+    image: bitnami/moodle:4.0.3
     env_file:
       - server/.env
     ports:
@@ -73,10 +81,12 @@ services:
     restart: unless-stopped
     networks:
       - moodle
+    cpuset: ${CONTAINER_CPU:-0-1}
+    mem_limit: ${CONTAINER_MEMORY:-1G}
 
   mariadb:
     container_name: mariadb
-    image: mariadb
+    image: mariadb:12.0.2
     networks:
       - moodle
     env_file:
@@ -84,6 +94,8 @@ services:
     volumes:
       - mariadb-data:/var/lib/mysql
     restart: unless-stopped
+    cpuset: ${CONTAINER_CPU:-0-1}
+    mem_limit: ${CONTAINER_MEMORY:-1G}
 
 
 volumes:

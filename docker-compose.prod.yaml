@@ -8,11 +8,15 @@ services:
     restart: unless-stopped
     env_file:
       - server/.env
+    cpuset: ${CONTAINER_CPU:-0-1}
+    mem_limit: ${CONTAINER_MEMORY:-1G}
 
   mongodb:
-    image: bitnamilegacy/mongodb:8.0.13
+    image: bitnamilegacy/mongodb:8-noble
     env_file:
       - server/.env
+    command:
+      - '--wiredTigerCacheSizeGB=${MONGODB_CACHE_SIZE:-1}'
     volumes:
       - ../${COMPOSE_PROJECT_NAME}-dbdata:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
@@ -25,3 +29,5 @@ services:
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT}:8080"
+    cpuset: ${CONTAINER_CPU:-0-1}
+    mem_limit: ${CONTAINER_MEMORY:-1G}
