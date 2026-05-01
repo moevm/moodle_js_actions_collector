@@ -400,7 +400,7 @@
     function getUserEmail(callback) { // works only on e.moevm.info
         let id = userID;
         let xhr = new XMLHttpRequest();
-        xhr.open("GET", "http://localhost/user/profile.php?id=" + id);
+        xhr.open("GET", "https://e.moevm.info/user/profile.php?id=" + id);
         xhr.responseType = 'document';
         xhr.send();
         xhr.onreadystatechange = function() {
