@@ -36,14 +36,18 @@ services:
     networks:
       - backend
       - frontend
+    cpuset: ${CONTAINER_CPU:-0-1}
+    mem_limit: ${CONTAINER_MEMORY:-1G}
 
   mongodb:
     container_name: mongodb
-    image: bitnamilegacy/mongodb:8.0.13
+    image: bitnamilegacy/mongodb:8-noble
     environment:
       TEST_RUN: true
     env_file:
       - server/.env
+    command:
+      - '--wiredTigerCacheSizeGB=${MONGODB_CACHE_SIZE:-1}'
     volumes:
       - mongo-data:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
@@ -62,6 +66,8 @@ services:
       - "8081:8080"
     networks:
       - frontend
+    cpuset: ${CONTAINER_CPU:-0-1}
+    mem_limit: ${CONTAINER_MEMORY:-1G}
 
 volumes:
   mongo-data:
