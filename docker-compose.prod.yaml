@@ -8,6 +8,8 @@ services:
     restart: unless-stopped
     env_file:
       - server/.env
+    cpus: 2.0
+    mem_limit: 2G
 
   mongodb:
     image: bitnamilegacy/mongodb:8.0.13
@@ -17,6 +19,8 @@ services:
       - ../${COMPOSE_PROJECT_NAME}-dbdata:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
     restart: unless-stopped
+    cpus: 2.0
+    mem_limit: 2G
 
   frontend:
     build:
@@ -25,3 +29,5 @@ services:
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT}:8080"
+    cpus: 2.0
+    mem_limit: 2G
