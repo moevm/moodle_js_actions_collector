@@ -20,6 +20,8 @@ services:
       timeout: 1s
       retries: 2
       start_period: 4s
+    cpus: 2.0
+    mem_limit: 2G
 
   mongodb:
     container_name: mongodb 
@@ -40,6 +42,8 @@ services:
       timeout: 1s
       retries: 2
       start_period: 4s
+    cpus: 2.0
+    mem_limit: 2G
 
   frontend:
     container_name: client
@@ -59,6 +63,8 @@ services:
       timeout: 1s
       retries: 2
       start_period: 4s
+    cpus: 2.0
+    mem_limit: 2G
 
   moodle:
     container_name: moodle
@@ -73,6 +79,8 @@ services:
     restart: unless-stopped
     networks:
       - moodle
+    cpus: 2.0
+    mem_limit: 2G
 
   mariadb:
     container_name: mariadb
@@ -84,6 +92,8 @@ services:
     volumes:
       - mariadb-data:/var/lib/mysql
     restart: unless-stopped
+    cpus: 2.0
+    mem_limit: 2G
 
 
 volumes:
