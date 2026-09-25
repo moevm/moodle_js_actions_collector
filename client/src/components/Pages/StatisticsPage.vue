@@ -48,22 +48,37 @@
         <button id="reset-search" class="reset-button" @click="resetSearch">Сброс</button>
       </div>
     </Filters>
-    <div class="col-md-12">
-      <button @click="prevPage">
-        Previous
+    <nav class="statistics-pagination" aria-label="Навигация по статистике">
+      <button
+        type="button"
+        class="statistics-pagination__button"
+        :disabled="page <= 1"
+        @click="prevPage"
+      >
+        Назад
       </button>
-      <div class="mb-3">
-        Items per Page:
-        <select v-model="pageSize" @change="handlePageSizeChange($event)">
+      <div class="statistics-pagination__size">
+        <label for="statistics-page-size">На странице:</label>
+        <select
+          id="statistics-page-size"
+          class="statistics-pagination__select"
+          v-model="pageSize"
+          @change="handlePageSizeChange($event)"
+        >
           <option v-for="size in pageSizes" :key="size" :value="size">
-            {{ size }}
+            {{ size === -1 ? 'Все' : size }}
           </option>
         </select>
       </div>
-      <button @click="nextPage">
-        Next
+      <button
+        type="button"
+        class="statistics-pagination__button"
+        :disabled="pageSize == -1 || page >= totalPages"
+        @click="nextPage"
+      >
+        Вперёд
       </button>
-  </div>
+    </nav>
     <StatisticsTable v-if="selectedType === 'table'" 
       :info="statisticsInfo">
     </StatisticsTable>
@@ -334,6 +349,66 @@ export default {
 
 <style>
 @import '@/colors.css';
+.statistics-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 96%;
+  margin: 12px auto;
+  padding: 12px 16px;
+  border: 1px solid var(--white-2);
+  border-radius: 8px;
+  background-color: var(--white-4);
+  color: var(--grey-4);
+}
+
+.statistics-pagination__size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statistics-pagination__button,
+.statistics-pagination__select {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--blue-2);
+  border-radius: 6px;
+  background-color: var(--white-1);
+  color: var(--blue-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+.statistics-pagination__button {
+  min-width: 96px;
+  font-weight: 600;
+}
+
+.statistics-pagination__select {
+  min-width: 80px;
+  appearance: auto;
+}
+
+.statistics-pagination__button:hover:not(:disabled),
+.statistics-pagination__select:hover {
+  background-color: var(--white-5);
+}
+
+.statistics-pagination__button:focus-visible,
+.statistics-pagination__select:focus-visible {
+  outline: 2px solid var(--blue-2);
+  outline-offset: 3px;
+}
+
+.statistics-pagination__button:disabled {
+  border-color: var(--grey-1);
+  background-color: var(--white-4);
+  color: var(--grey-7);
+  cursor: not-allowed;
+}
+
 .second-filter {
   padding-top: 0;
   padding-bottom: 0;
