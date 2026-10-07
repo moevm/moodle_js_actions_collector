@@ -1,6 +1,6 @@
 services:
   mongodb:
-    image: mongo:7.0.16
+    image: mongo:8.0.13
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-collectorroot}
