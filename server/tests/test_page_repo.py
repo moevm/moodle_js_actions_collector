@@ -31,7 +31,7 @@ async def test_get_all_records():
     expected_id_1 = '60d5ec49f1a4a21f6c8b4567'
     expected_id_2 = '60d5ec49f1a4a21f6c8b4568'
     repository = MongoPageRepo(mock_client)
-    
+
     # Act
     result = await repository.get_all_records()
 
@@ -86,7 +86,7 @@ async def find_to_list():
                 "width": 1200,
                 "height": 800
             }
-        }, 
+        },
         {
             "_id": "60d5ec49f1a4a21f6c8b4568",
             "page": "http://e.moevm.info",

@@ -1,10 +1,6 @@
-#!/bin/bash
-
-if [ -z "$1" ]; then
-  FILE=./docker-compose.prod.yaml
-else
-  FILE=$1
-fi
-
-docker compose -f "$FILE" down -v
-docker compose -f "$FILE" up -d --build
+#!/usr/bin/env bash
+# Compatibility entry point: collector only, no volume deletion.
+set -euo pipefail
+cd -- "$(dirname -- "$0")"
+[ -f .env ] || cp .env.example .env
+docker compose -f docker-compose.prod.yaml up -d --build --wait --wait-timeout 900

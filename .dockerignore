@@ -1,0 +1,15 @@
+.git
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/dist
+.env
+server/.env
+
+**/.env
+*Zone.Identifier*
+.commit-backup
+exports
+*.zip
+*.tar
+*.tar.gz

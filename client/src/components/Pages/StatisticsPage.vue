@@ -49,6 +49,7 @@
       </div>
     </Filters>
     <nav class="statistics-pagination" aria-label="Навигация по статистике">
+      <button type="button" class="statistics-pagination__button" @click="getStatistics">Обновить</button>
       <button
         type="button"
         class="statistics-pagination__button"
@@ -79,7 +80,7 @@
         Вперёд
       </button>
     </nav>
-    <StatisticsTable v-if="selectedType === 'table'" 
+    <StatisticsTable v-if="selectedType === 'table'"
       :info="statisticsInfo">
     </StatisticsTable>
     <Chart v-else :info="statisticsInfo"></Chart>
@@ -140,7 +141,8 @@ export default {
   },
 
   beforeMount() {
-    this.today = new Date().toISOString().slice(0, 16);
+    const now = new Date();
+    this.today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     let name = sessionStorage.getItem("name");
     if (name) {
       this.name = name;
@@ -237,6 +239,7 @@ export default {
 
     startSearchFilters() {
       this.startSearch = true;
+      this.page = 1;
       this.getStatistics();
     },
 
@@ -286,18 +289,18 @@ export default {
       }
       else if (this.beginTimestamp.length !== 0 && this.endTimestamp.length === 0) {
         this.params = {
-          begin_timestamp: this.beginTimestamp
+          begin_timestamp: new Date(this.beginTimestamp).toISOString()
         }
       }
       else if (this.beginTimestamp.length === 0 && this.endTimestamp.length !== 0) {
         this.params = {
-          end_timestamp: this.endTimestamp
+          end_timestamp: new Date(this.endTimestamp).toISOString()
         }
       }
       else {
         this.params = {
-          begin_timestamp: this.beginTimestamp,
-          end_timestamp: this.endTimestamp
+          begin_timestamp: new Date(this.beginTimestamp).toISOString(),
+          end_timestamp: new Date(this.endTimestamp).toISOString()
         }
       }
 
@@ -305,12 +308,12 @@ export default {
       Object.assign(this.params, searchParams)
 
       axios
-          .get(STAT_URL, {params: searchParams})
+          .get(STAT_URL, {params: this.params})
           .then((response) => {
             console.log(response);
             let stats = response.data[0]
             this.count = response.data[1]
-            this.totalPages = Math.ceil(this.count/this.pageSize)
+            this.totalPages = this.pageSize == -1 ? 1 : Math.max(1, Math.ceil(this.count/this.pageSize))
             stats.forEach(element => {
               let firstLayer = {
                 FIO: element.student,
@@ -326,7 +329,8 @@ export default {
                 secondLayer.eventType = action.event_type;
                 secondLayer.elementType = action.element_type;
                 secondLayer.elementName = action.element_name;
-                const dateTime = new Date(action.timestamp);
+                const timestamp = action.timestamp;
+                const dateTime = new Date(/[zZ]$|[+-]\d\d:\d\d$/.test(timestamp) ? timestamp : timestamp + 'Z');
                 const hours = dateTime.getHours().toString().padStart(2, '0');
                 const minutes = dateTime.getMinutes().toString().padStart(2, '0');
                 const seconds = dateTime.getSeconds().toString().padStart(2, '0');
@@ -494,4 +498,3 @@ export default {
   margin-left: 50%;
 }
 </style>
-  

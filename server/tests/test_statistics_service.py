@@ -12,7 +12,7 @@ async def test_get_all_sessions_success():
     mock_repo.get_all_sessions.return_value = repo_get_all_sessions()
 
     service = StatisticsService(mock_repo, None)
-    
+
     # Act
     result = await service.get_all_sessions(SessionFilter(page=1,pageSize=5))
 
@@ -30,7 +30,7 @@ async def test_get_all_sessions_fail():
     mock_repo.get_all_sessions.side_effect = RepoNotFoundError()
 
     service = StatisticsService(mock_repo, None)
-    
+
     try:
         # Act
         result = await service.get_all_sessions(SessionFilter(page=1,pageSize=5))
@@ -47,7 +47,7 @@ async def test_get_session_success():
     expected_id = '60d5ec49f1a4a21f6c8b4567'
 
     service = StatisticsService(mock_repo, None)
-    
+
     # Act
     result = await service.get_session("60d5ec49f1a4a21f6c8b4567")
 
@@ -63,7 +63,7 @@ async def test_get_session_fail():
     mock_repo.get_session.side_effect = RepoNotFoundError()
 
     service = StatisticsService(mock_repo, None)
-    
+
     try:
         # Act
         result = await service.get_session("60d5ec49f1a4a21f6c8b4567")
@@ -79,7 +79,7 @@ async def test_delete_session_success():
     mock_repo.delete_session.return_value = repo_delete_session()
 
     service = StatisticsService(mock_repo, None)
-    
+
     # Act
     result = await service.delete_session("60d5ec49f1a4a21f6c8b4567")
 
@@ -94,7 +94,7 @@ async def test_delete_session_fail():
     mock_repo.delete_session.side_effect = RepoNotFoundError()
 
     service = StatisticsService(mock_repo, None)
-    
+
     try:
         # Act
         result = await service.delete_session("60d5ec49f1a4a21f6c8b4567")
@@ -112,7 +112,7 @@ async def test_create_session_success():
     mock_repo.add_session.return_value = repo_add_session()
 
     service = StatisticsService(mock_repo, None)
-    
+
     # Act
     result = await service.create_session(mock_session_data)
 
@@ -128,7 +128,7 @@ async def test_create_session_fail():
     mock_repo.create_record.side_effect = Exception()
 
     service = StatisticsService(mock_repo, None)
-    
+
     try:
         # Act
         result = await service.create_session(mock_session_data)
@@ -146,7 +146,7 @@ async def test_create_page_success():
     mock_page.create_record.return_value = repo_create_page()
 
     service = StatisticsService(None, mock_page)
-    
+
     # Act
     result = await service.create_page(mock_page_data)
 
@@ -162,7 +162,7 @@ async def test_create_page_fail():
     mock_page.create_record.side_effect = Exception()
 
     service = StatisticsService(None, mock_page)
-    
+
     try:
         # Act
         result = await service.create_page(mock_page_data)
@@ -180,7 +180,7 @@ async def test_get_pages_success():
     mock_page.get_all_records.return_value = repo_get_all_records()
 
     service = StatisticsService(None, mock_page)
-    
+
     # Act
     result = await service.get_pages()
 
@@ -199,7 +199,7 @@ async def test_get_pages_fail():
     mock_page.get_all_records.side_effect = Exception()
 
     service = StatisticsService(None, mock_page)
-    
+
     try:
         # Act
         result = await service.get_pages()
@@ -210,8 +210,8 @@ async def test_get_pages_fail():
 
 async def repo_get_all_sessions():
     return [{
-        "_id": "60d5ec49f1a4a21f6c8b4567", 
-        "session_id": "2", 
+        "_id": "60d5ec49f1a4a21f6c8b4567",
+        "session_id": "2",
         "actions": [{
             "timestamp": "2024-02-02T00:01",
             "element_type": "button",
@@ -286,7 +286,7 @@ def create_mock_session_data():
 
 async def repo_add_session():
     return {
-        "_id": "60d5ec49f1a4a21f6c8b4567", 
+        "_id": "60d5ec49f1a4a21f6c8b4567",
         "session_id": "60d5ec49f1a4a21f6c8b4561",
         "course": "Курс молодого бойца",
         "email": "iiivanov@edu.ru",
@@ -349,7 +349,7 @@ async def repo_get_all_records():
                 "width": 1200,
                 "height": 800
             }
-        }, 
+        },
         {
             "_id": "60d5ec49f1a4a21f6c8b4568",
             "page": "http://e.moevm.info",
