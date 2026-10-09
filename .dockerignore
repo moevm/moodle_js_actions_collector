@@ -10,6 +10,8 @@ server/.env
 *Zone.Identifier*
 .commit-backup
 exports
+reports
+e2e
 *.zip
 *.tar
 *.tar.gz

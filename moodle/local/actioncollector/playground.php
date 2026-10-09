@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__ . '/../../../config.php');
+require_once(__DIR__ . '/../../config.php');
 $course = $DB->get_record('course', ['shortname' => 'COLLECTOR-DEMO'], '*', MUST_EXIST);
 require_login($course);
 $PAGE->set_url(new moodle_url('/local/actioncollector/playground.php'));

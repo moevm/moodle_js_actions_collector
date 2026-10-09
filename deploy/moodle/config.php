@@ -17,4 +17,6 @@ $CFG->directorypermissions = 02770;
 $CFG->sessioncookie = 'MoodleActions';
 $CFG->noemailever = true;
 $CFG->timezone = 'Europe/Moscow';
+$CFG->noreplyaddress = 'noreply@example.invalid';
+$CFG->debugdisplay = false;
 require_once(__DIR__ . '/lib/setup.php');

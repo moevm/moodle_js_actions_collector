@@ -1,0 +1,13 @@
+FROM mcr.microsoft.com/playwright:v1.63.0-noble
+WORKDIR /work
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+COPY package.json package-lock.json ./
+COPY npm-cache/ /opt/npm-packages/
+RUN set -eu; for archive in /opt/npm-packages/*.tgz; do npm cache add --offline "$archive"; done \
+    && npm ci --offline --ignore-scripts --no-audit --no-fund \
+    && npm cache clean --force \
+    && rm -rf /opt/npm-packages
+COPY *.mjs ./
+COPY tests/ ./tests/
+RUN npm run check
+ENTRYPOINT ["node", "run.mjs"]

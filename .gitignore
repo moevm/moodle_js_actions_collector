@@ -10,6 +10,8 @@
 .venv/
 .commit-backup/
 exports/
+reports/
+e2e/npm-cache/
 *.zip
 *.tar
 *.tar.gz

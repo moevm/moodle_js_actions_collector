@@ -15,4 +15,6 @@ jobs:
         run: |
           cp .env.example .env
           docker compose config --quiet
+          docker compose --profile test config --quiet
           docker compose build
+          docker build --pull=false --tag moodle-actions-playwright:local --file e2e/Dockerfile e2e

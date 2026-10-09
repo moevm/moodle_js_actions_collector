@@ -1,3 +1,4 @@
 include:
   - path: deploy/collector/compose.yaml
   - path: deploy/moodle/compose.yaml
+  - path: deploy/tests/compose.yaml
