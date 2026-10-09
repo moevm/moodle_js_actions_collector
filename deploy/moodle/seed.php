@@ -27,6 +27,7 @@ function lab_user($username, $firstname, $lastname, $password) {
 }
 
 $studentid = lab_user('student', 'Test', 'Student', getenv('MOODLE_STUDENT_PASSWORD'));
+$student2id = lab_user('student2', 'Second', 'Student', getenv('MOODLE_STUDENT_PASSWORD'));
 $teacherid = lab_user('teacher', 'Test', 'Teacher', getenv('MOODLE_TEACHER_PASSWORD'));
 $course = $DB->get_record('course', ['shortname' => 'COLLECTOR-DEMO']);
 if (!$course) {
@@ -52,6 +53,8 @@ foreach (['student' => $studentid, 'editingteacher' => $teacherid] as $role => $
     $roleid = $DB->get_field('role', 'id', ['shortname' => $role], MUST_EXIST);
     $enrolplugin->enrol_user($instance, $userid, $roleid);
 }
+
+$enrolplugin->enrol_user($instance, $student2id, $DB->get_field('role', 'id', ['shortname' => 'student'], MUST_EXIST));
 
 function lab_module($course, $type, $idnumber, $name, array $extra) {
     global $DB;
@@ -167,7 +170,7 @@ $manifest = [
     'assignment' => $CFG->wwwroot . '/mod/assign/view.php?id=' . $assignment->id,
     'quiz' => $CFG->wwwroot . '/mod/quiz/view.php?id=' . $quizcm->id,
     'playground' => $CFG->wwwroot . '/local/actioncollector/playground.php',
-    'student_id' => $studentid, 'teacher_id' => $teacherid,
+    'student_id' => $studentid, 'student2_id' => $student2id, 'teacher_id' => $teacherid,
 ];
 file_put_contents($CFG->dataroot . '/demo.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 file_put_contents($CFG->dataroot . '/.actions-ready', 'ready');

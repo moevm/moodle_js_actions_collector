@@ -13,7 +13,7 @@ export function markedUrl(value) {
   return url.href;
 }
 
-export async function login(page, target = demo.playground) {
+export async function login(page, target = demo.playground, username = 'student') {
   const response = await page.goto(markedUrl(target));
   if (!response?.ok()) {
     throw new Error(`Moodle page returned HTTP ${response?.status()}: ${page.url()}\n${(await page.locator('body').innerText()).slice(0, 2000)}`);
@@ -27,7 +27,7 @@ export async function login(page, target = demo.playground) {
   // Wait for the replacement before filling: outerHTML loses a typed value.
   await expect(page.locator('#login .login-form-password .toggle-sensitive-btn'),
     'Moodle must finish replacing the password field before login').toHaveCount(1);
-  await page.locator('#username').fill('student');
+  await page.locator('#username').fill(username);
   await page.locator('#password').fill(process.env.MOODLE_STUDENT_PASSWORD);
   const [loginRequest] = await Promise.all([
     page.waitForRequest(request => request.method() === 'POST'
