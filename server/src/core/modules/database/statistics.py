@@ -12,7 +12,7 @@ class MongoStatisticRepo:
     async def get_all_sessions(self, filters: SessionFilter) -> list:
         stats = []
         query, pages = filters.query()
-        start = (pages['page']-1)*pages['pageSize']
+        start = 0 if pages['pageSize'] == -1 else (pages['page']-1)*pages['pageSize']
         total_rows = await self.client.statistics.count_documents(query)
         pageSize = total_rows if pages['pageSize'] == -1 else pages['pageSize']
         for session in await self.client.statistics.find(query).sort({"_id": -1}).skip(start).limit(pageSize).to_list(length=None):
@@ -49,13 +49,13 @@ def filter_actions(query: SessionFilter, payload: list) -> list:
         return payload
     data = deepcopy(payload)
     if query.action_type:
-        data = filter(lambda item: query.action_type in str(item['action_type']), data)
+        data = filter(lambda item: query.action_type.lower() in str(item['action_type']).lower(), data)
     if query.event_type:
-        data = filter(lambda item: query.event_type in str(item['event_type']), data)
+        data = filter(lambda item: query.event_type.lower() in str(item['event_type']).lower(), data)
     if query.element_type:
-        data = filter(lambda item: query.element_type in str(item['element_type']), data)
+        data = filter(lambda item: query.element_type.lower() in str(item['element_type']).lower(), data)
     if query.element_name:
-        data = filter(lambda item: query.element_name in str(item['element_name']), data)
+        data = filter(lambda item: query.element_name.lower() in str(item['element_name']).lower(), data)
     if query.begin_timestamp:
         data = filter(lambda item: query.begin_timestamp <= item['timestamp'], data)
     if query.end_timestamp:

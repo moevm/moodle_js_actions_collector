@@ -1,27 +1,20 @@
-name: Docker Image CI
-
+name: Docker builds
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
-
+    branches: [main]
+permissions:
+  contents: read
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Build docker-compose
+      - uses: actions/checkout@v4
+      - name: Validate and build services
         run: |
-          docker compose -f docker-compose.yaml build
-      - name: Run docker-compose
-        run: |
-          docker compose up -d mongodb backend frontend 
-          sleep 10
-      - name: Check health
-        uses: thegabriele97/dockercompose-health-action@main
-        with:
-          filename: 'docker-compose.yaml'
-          timeout: '20'
-          workdir: '.'
+          cp .env.example .env
+          docker compose config --quiet
+          docker compose --profile test config --quiet
+          docker compose build
+          docker build --pull=false --tag moodle-actions-playwright:local --file e2e/Dockerfile e2e

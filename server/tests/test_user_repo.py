@@ -12,7 +12,7 @@ async def test_get_all_users():
     expected_id_1 = '60d5ec49f1a4a21f6c8b4567'
     expected_id_2 = '60d5ec49f1a4a21f6c8b4568'
     user_repo = MongoUserRepo(mock_client)
-    
+
     # Act
     result = await user_repo.get_all_users()
 
@@ -31,7 +31,7 @@ async def test_get_user_success():
     mock_client.users.find_one.return_value = get_user()
     expected_id = '60d5ec49f1a4a21f6c8b4567'
     user_repo = MongoUserRepo(mock_client)
-    
+
     # Act
     result = await user_repo.get_user(expected_id)
 
@@ -63,7 +63,7 @@ async def test_get_user_by_email_success():
     mock_client.users.find_one.return_value = get_user()
     expected_email = 'iiivanov@edu.ru'
     user_repo = MongoUserRepo(mock_client)
-    
+
     # Act
     result = await user_repo.get_user_by_email(expected_email)
 
@@ -132,7 +132,7 @@ async def test_add_user_success():
     assert result["name"] == "Иван"
     assert "_id" in result
     assert result["_id"] == '60d5ec49f1a4a21f6c8b4567'
-    
+
 
 @pytest.mark.asyncio
 async def test_add_user_fail_already_exists():
@@ -157,7 +157,7 @@ async def test_delete_user_success():
     mock_client.users.delete_one.return_value = delete_one()
     id = '60d5ec49f1a4a21f6c8b4567'
     user_repo = MongoUserRepo(mock_client)
-    
+
     # Act
     result = await user_repo.delete_user(id)
 
@@ -293,7 +293,7 @@ def update_mock_user_data():
         "password": "sdfsdfwgesdgcx"
     }
 
-    
+
 async def insert_one():
     class CreatedSession:
         def __init__(self):

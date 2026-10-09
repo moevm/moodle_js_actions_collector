@@ -2,7 +2,7 @@ import pymongo
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
-from src.depends import client
+from src.depends import db
 
 router = APIRouter()
 
@@ -16,6 +16,6 @@ router = APIRouter()
 async def healthcheck():
     try:
         with pymongo.timeout(5):
-            return await client["moodle-statistics"].command("ping")
+            return await db.command("ping")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail={"message": "Database instance is unhealthy", "error": str(e)})

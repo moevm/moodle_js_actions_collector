@@ -133,6 +133,7 @@ export default {
   },
   computed: {
     chartData() {
+      if (!this.info.length) return {labels: [], datasets: []};
       let labels = [];
       let data = [];
       function compareDate(a, b) {
@@ -150,7 +151,7 @@ export default {
       let min = cloneInfo.at(0).Date;
       let max = cloneInfo.at(-1).Date;
       delta = (max - min) / (limit * this.zoom);
-    
+
 
       const dateCount = [];
       arr.forEach((action) => {
@@ -164,7 +165,7 @@ export default {
       });
       dateCount.forEach(([key, value]) => {
         labels.push(key);
-        data.push(new Date(value));
+        data.push(value);
       });
       console.log(data);
       return {

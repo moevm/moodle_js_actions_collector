@@ -11,6 +11,22 @@ paths:
       summary: Get All Sessions
       operationId: get_all_sessions_api_statistics__get
       parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: -1
+          default: 10
+          title: Pagesize
       - name: begin_timestamp
         in: query
         required: false
@@ -19,9 +35,7 @@ paths:
           - type: string
             format: date-time
           - type: 'null'
-          description: start date
           title: Begin Timestamp
-        description: start date
       - name: end_timestamp
         in: query
         required: false
@@ -30,9 +44,7 @@ paths:
           - type: string
             format: date-time
           - type: 'null'
-          description: stop date
           title: End Timestamp
-        description: stop date
       - name: student_id
         in: query
         required: false
@@ -40,9 +52,7 @@ paths:
           anyOf:
           - type: integer
           - type: 'null'
-          description: student moodle id
           title: Student Id
-        description: student moodle id
       - name: student_name
         in: query
         required: false
@@ -50,9 +60,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: student FIO
           title: Student Name
-        description: student FIO
       - name: student_email
         in: query
         required: false
@@ -60,9 +68,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: student email
           title: Student Email
-        description: student email
       - name: course_title
         in: query
         required: false
@@ -70,9 +76,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: name of the course
           title: Course Title
-        description: name of the course
       - name: action_type
         in: query
         required: false
@@ -80,9 +84,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: action type
           title: Action Type
-        description: action type
       - name: event_type
         in: query
         required: false
@@ -90,9 +92,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: event type
           title: Event Type
-        description: event type
       - name: element_type
         in: query
         required: false
@@ -100,9 +100,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: element type
           title: Element Type
-        description: element type
       - name: element_name
         in: query
         required: false
@@ -110,9 +108,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: element name
           title: Element Name
-        description: element name
       responses:
         '200':
           description: Get statistics
@@ -120,8 +116,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/SessionData'
+                items: {}
                 title: Response Get All Sessions Api Statistics  Get
         '422':
           description: Validation Error
@@ -400,6 +395,22 @@ paths:
       summary: Download Data
       operationId: download_data_api_download_statistics_get
       parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: -1
+          default: 10
+          title: Pagesize
       - name: begin_timestamp
         in: query
         required: false
@@ -408,9 +419,7 @@ paths:
           - type: string
             format: date-time
           - type: 'null'
-          description: start date
           title: Begin Timestamp
-        description: start date
       - name: end_timestamp
         in: query
         required: false
@@ -419,9 +428,7 @@ paths:
           - type: string
             format: date-time
           - type: 'null'
-          description: stop date
           title: End Timestamp
-        description: stop date
       - name: student_id
         in: query
         required: false
@@ -429,9 +436,7 @@ paths:
           anyOf:
           - type: integer
           - type: 'null'
-          description: student moodle id
           title: Student Id
-        description: student moodle id
       - name: student_name
         in: query
         required: false
@@ -439,9 +444,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: student FIO
           title: Student Name
-        description: student FIO
       - name: student_email
         in: query
         required: false
@@ -449,9 +452,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: student email
           title: Student Email
-        description: student email
       - name: course_title
         in: query
         required: false
@@ -459,9 +460,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: name of the course
           title: Course Title
-        description: name of the course
       - name: action_type
         in: query
         required: false
@@ -469,9 +468,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: action type
           title: Action Type
-        description: action type
       - name: event_type
         in: query
         required: false
@@ -479,9 +476,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: event type
           title: Event Type
-        description: event type
       - name: element_type
         in: query
         required: false
@@ -489,9 +484,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: element type
           title: Element Type
-        description: element type
       - name: element_name
         in: query
         required: false
@@ -499,9 +492,7 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          description: element name
           title: Element Name
-        description: element name
       responses:
         '200':
           description: Download statistics
@@ -582,6 +573,12 @@ components:
         course:
           type: string
           title: Course
+        tabID:
+          type: string
+          title: Tabid
+        url:
+          type: string
+          title: Url
         actions:
           items:
             $ref: '#/components/schemas/Payload'
@@ -594,47 +591,49 @@ components:
       - student
       - email
       - course
+      - tabID
+      - url
       title: CreateSessionData
       examples:
       - actions:
         - action_type: conversation
           element_html: <input/>
-          element_name: "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C"
+          element_name: сохранить
           element_type: button
           event_type: mousedown
-          timestamp: '2024-05-15T20:25:43.654699'
-        course: "\u041A\u0443\u0440\u0441 \u043C\u043E\u043B\u043E\u0434\u043E\u0433\
-          \u043E \u0431\u043E\u0439\u0446\u0430"
+          timestamp: '2026-10-07T07:50:52.023866'
+        course: Курс молодого бойца
         email: iiivanov@edu.ru
-        session_id: 00155b7d-0f9a-44f6-93d4-8a97834460f5
-        student: "\u0418\u0432\u0430\u043D\u043E\u0432 \u0418\u0432\u0430\u043D"
+        session_id: 1f2297b3-affb-420b-beb2-ea5ae488b4a0
+        student: Иванов Иван
         student_id: 1
+        url: https://e.moevm.info/course/view.php?id=2
       - actions:
         - action_type: hidden
           element_html: <input/>
-          element_name: "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C"
+          element_name: сохранить
           element_type: page
           event_type: visibilitychange
-          timestamp: '2024-05-15T20:25:43.654699'
-        course: "\u041A\u0443\u0440\u0441 \u043C\u043E\u043B\u043E\u0434\u043E\u0433\
-          \u043E \u0431\u043E\u0439\u0446\u0430"
+          timestamp: '2026-10-07T07:50:52.023874'
+        course: Курс молодого бойца
         email: iiivanov@edu.ru
-        session_id: 2f09173e-01dd-49e6-8c74-cb195de13fbe
-        student: "\u0418\u0432\u0430\u043D\u043E\u0432 \u0418\u0432\u0430\u043D"
+        session_id: 74686f52-b103-46ab-ad3c-54c3f129f1ea
+        student: Иванов Иван
         student_id: 1
+        url: https://e.moevm.info/course/view.php?id=2
       - actions:
         - action_type: visible
           element_html: <input/>
-          element_name: "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C"
+          element_name: сохранить
           element_type: page
           event_type: visibilitychange
-          timestamp: '2024-05-15T20:25:43.654699'
-        course: "\u041A\u0443\u0440\u0441 \u043C\u043E\u043B\u043E\u0434\u043E\u0433\
-          \u043E \u0431\u043E\u0439\u0446\u0430"
+          timestamp: '2026-10-07T07:50:52.023878'
+        course: Курс молодого бойца
         email: iiivanov@edu.ru
-        session_id: c3244ef1-d270-4217-8feb-7760b4fbfda1
-        student: "\u0418\u0432\u0430\u043D\u043E\u0432 \u0418\u0432\u0430\u043D"
+        session_id: 9a3d2d42-0218-4dc7-afd4-57761abb4fe6
+        student: Иванов Иван
         student_id: 1
+        url: https://e.moevm.info/course/view.php?id=2
     CreateUser:
       properties:
         name:
@@ -663,10 +662,10 @@ components:
       title: CreateUser
       example:
         email: iiivanov@edu.ru
-        lastname: "\u0418\u0432\u0430\u043D\u043E\u0432\u0438\u0447"
-        name: "\u0418\u0432\u0430\u043D"
+        lastname: Иванович
+        name: Иван
         password: sdfsdfwgesdgcx
-        surname: "\u0418\u0432\u0430\u043D\u043E\u0432"
+        surname: Иванов
     HTTPValidationError:
       properties:
         detail:
@@ -709,22 +708,22 @@ components:
       examples:
       - action_type: conversation
         element_html: <input/>
-        element_name: "\u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C"
+        element_name: отправить
         element_type: button
         event_type: mousedown
-        timestamp: '2024-05-15T20:25:43.650178'
+        timestamp: '2026-10-07T07:50:52.021167'
       - action_type: hidden
         element_html: <input/>
-        element_name: "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C"
+        element_name: сохранить
         element_type: page
         event_type: visibilitychange
-        timestamp: '2024-05-15T20:25:43.650178'
+        timestamp: '2026-10-07T07:50:52.021176'
       - action_type: visible
         element_html: <input/>
-        element_name: "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C"
+        element_name: сохранить
         element_type: page
         event_type: visibilitychange
-        timestamp: '2024-05-15T20:25:43.650178'
+        timestamp: '2026-10-07T07:50:52.021177'
     Role:
       type: string
       enum:
@@ -749,9 +748,15 @@ components:
           type: string
           format: email
           title: Email
+        tabID:
+          type: string
+          title: Tabid
         course:
           type: string
           title: Course
+        url:
+          type: string
+          title: Url
         actions:
           items:
             $ref: '#/components/schemas/Payload'
@@ -763,51 +768,53 @@ components:
       - session_id
       - student
       - email
+      - tabID
       - course
+      - url
       title: SessionData
       examples:
       - actions:
         - action_type: conversation
           element_html: <input/>
-          element_name: "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C"
+          element_name: сохранить
           element_type: button
           event_type: mousedown
-          timestamp: '2024-05-15T20:25:43.652179'
-        course: "\u041A\u0443\u0440\u0441 \u043C\u043E\u043B\u043E\u0434\u043E\u0433\
-          \u043E \u0431\u043E\u0439\u0446\u0430"
+          timestamp: '2026-10-07T07:50:52.022042'
+        course: Курс молодого бойца
         email: iiivanov@edu.ru
-        id: 6a1d086b-31b2-4b5e-94c7-0e8def042374
-        session_id: 643893a9-f996-4955-beed-d81084148976
-        student: "\u0418\u0432\u0430\u043D\u043E\u0432 \u0418\u0432\u0430\u043D"
+        id: 6f39710c-abdf-439b-af46-2a26f8808384
+        session_id: 71bb7e51-2412-44b2-8659-d598e41a9bec
+        student: Иванов Иван
         student_id: 1
+        url: https://e.moevm.info/course/view.php?id=2
       - actions:
         - action_type: hidden
           element_html: <input/>
-          element_name: "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C"
+          element_name: сохранить
           element_type: button
           event_type: visibilitychange
-          timestamp: '2024-05-15T20:25:43.652179'
-        course: "\u041A\u0443\u0440\u0441 \u043C\u043E\u043B\u043E\u0434\u043E\u0433\
-          \u043E \u0431\u043E\u0439\u0446\u0430"
+          timestamp: '2026-10-07T07:50:52.022051'
+        course: Курс молодого бойца
         email: iiivanov@edu.ru
-        id: 1ac86753-1ba2-45bf-af19-9f6d6a91a082
-        session_id: 17f99931-19f9-4a7f-a8c6-a55b15d9438a
-        student: "\u0418\u0432\u0430\u043D\u043E\u0432 \u0418\u0432\u0430\u043D"
+        id: 89c9b8bb-1604-4d9c-8c0d-a94b0214c495
+        session_id: b8e1b968-afe8-4442-94f2-500ef64e6532
+        student: Иванов Иван
         student_id: 1
+        url: https://e.moevm.info/course/view.php?id=2
       - actions:
         - action_type: visible
           element_html: <input/>
-          element_name: "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C"
+          element_name: сохранить
           element_type: page
           event_type: visibilitychange
-          timestamp: '2024-05-15T20:25:43.652179'
-        course: "\u041A\u0443\u0440\u0441 \u043C\u043E\u043B\u043E\u0434\u043E\u0433\
-          \u043E \u0431\u043E\u0439\u0446\u0430"
+          timestamp: '2026-10-07T07:50:52.022057'
+        course: Курс молодого бойца
         email: iiivanov@edu.ru
-        id: 8e548bb3-b0ab-42f7-8010-97ee0cff09b1
-        session_id: 48f97b9d-b035-4578-b1fb-eaa3f5600868
-        student: "\u0418\u0432\u0430\u043D\u043E\u0432 \u0418\u0432\u0430\u043D"
+        id: ce3ad975-4d8d-4a55-8b32-642c80e43859
+        session_id: 96219a09-c821-40ba-9ae5-152ab51ffe11
+        student: Иванов Иван
         student_id: 1
+        url: https://e.moevm.info/course/view.php?id=2
     SignInData:
       properties:
         email:
@@ -868,11 +875,11 @@ components:
       title: UpdateUser
       example:
         email: iiivanov@edu.ru
-        lastname: "\u0418\u0432\u0430\u043D\u043E\u0432\u0438\u0447"
-        name: "\u0418\u0432\u0430\u043D"
+        lastname: Иванович
+        name: Иван
         password: sdfsdfwgesdgcx
         position: regular
-        surname: "\u0418\u0432\u0430\u043D\u043E\u0432"
+        surname: Иванов
     User:
       properties:
         _id:
@@ -907,12 +914,12 @@ components:
       title: User
       example:
         email: iiivanov@edu.ru
-        id: 42ea02b5-0e50-430f-bc68-aa6017122fde
-        lastname: "\u0418\u0432\u0430\u043D\u043E\u0432\u0438\u0447"
-        name: "\u0418\u0432\u0430\u043D"
+        id: bf6e2523-6d0d-4e82-9206-c9ff6af373a1
+        lastname: Иванович
+        name: Иван
         password: sdfsdfwgesdgcx
         position: regular
-        surname: "\u0418\u0432\u0430\u043D\u043E\u0432"
+        surname: Иванов
     ValidationError:
       properties:
         loc:
