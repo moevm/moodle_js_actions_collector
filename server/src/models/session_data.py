@@ -1,7 +1,14 @@
 import uuid
 from pydantic import BaseModel, EmailStr, HttpUrl, Field
 from datetime import datetime
-from typing import List
+from typing import List, Optional, Literal
+
+
+class EventDetails(BaseModel):
+    checked: Optional[bool] = None
+    selected_indices: Optional[List[int]] = None
+    option_count: Optional[int] = Field(default=None, ge=0)
+    keyboard_action: Optional[Literal["typing", "editing"]] = None
 
 
 class Payload(BaseModel):
@@ -11,6 +18,7 @@ class Payload(BaseModel):
     action_type: str = Field(...)
     event_type: str = Field(...)
     element_html: str = Field(..., description="The HTML content of the element")
+    details: Optional[EventDetails] = None
 
     class Config:
         populate_by_field_name = True

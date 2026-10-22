@@ -3,7 +3,9 @@ namespace local_actioncollector;
 defined('MOODLE_INTERNAL') || die();
 
 final class hook_callbacks {
-    public static function footer(\core\hook\output\before_standard_footer_html_generation $hook): void {
+    // Themes can replace the footer renderer and bypass its output hooks.
+    // Use the standard head hook; defer keeps the tracker behind DOM parsing.
+    public static function head(\core\hook\output\before_standard_head_html_generation $hook): void {
         global $USER, $PAGE;
         if (!isloggedin() || isguestuser() || !get_config('local_actioncollector', 'enabled')) {
             return;
@@ -20,7 +22,7 @@ final class hook_callbacks {
             ],
         ];
         $json = json_encode($context, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
-        $url = new \moodle_url('/local/actioncollector/collector.js', ['v' => 2026100700]);
+        $url = new \moodle_url('/local/actioncollector/collector.js', ['v' => 2026100900]);
         $html = '<script>window.actionCollectorConfig = ' . $json . ';</script>'
             . '<script src="' . s($url->out(false)) . '" defer></script>';
         $hook->add_html($html);

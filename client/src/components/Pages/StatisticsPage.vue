@@ -329,6 +329,12 @@ export default {
                 secondLayer.eventType = action.event_type;
                 secondLayer.elementType = action.element_type;
                 secondLayer.elementName = action.element_name;
+                const details = action.details || {};
+                const descriptions = [];
+                if (typeof details.checked === 'boolean') descriptions.push(details.checked ? 'Отмечен' : 'Снят');
+                if (Array.isArray(details.selected_indices)) descriptions.push(`Индексы выбора: ${details.selected_indices.join(', ')}; вариантов: ${details.option_count}`);
+                if (details.keyboard_action) descriptions.push(details.keyboard_action === 'typing' ? 'Ввод с клавиатуры' : 'Редактирование с клавиатуры');
+                secondLayer.details = descriptions.join('; ');
                 const timestamp = action.timestamp;
                 const dateTime = new Date(/[zZ]$|[+-]\d\d:\d\d$/.test(timestamp) ? timestamp : timestamp + 'Z');
                 const hours = dateTime.getHours().toString().padStart(2, '0');

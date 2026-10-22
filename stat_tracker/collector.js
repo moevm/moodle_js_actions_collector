@@ -46,12 +46,13 @@
   }
   state.flush = flush;
 
-  function record(action, event, type = 'page', name = 'page') {
+  function record(action, event, type = 'page', name = 'page', details) {
     queue.push({
       timestamp: new Date().toISOString(), action_type: action, event_type: event,
       element_type: type, element_name: String(name).slice(0, 160),
       // Do not transmit field contents, passwords or clipboard text.
-      element_html: type === 'page' ? '' : '<' + type + '>'
+      element_html: type === 'page' ? '' : '<' + type + '>',
+      ...(details ? {details} : {})
     });
     state.queued = queue.length;
     if (queue.length >= 5) void flush();
@@ -72,6 +73,20 @@
         record('interactions', eventName, type, name);
       }, {capture: true});
     }
+    doc.addEventListener('change', event => {
+      const element = event.target;
+      if (!element || element.nodeType !== 1) return;
+      const name = element.getAttribute('name') || element.id || element.tagName.toLowerCase();
+      if (element.matches('input[type="checkbox"]')) {
+        record('interactions', 'change', 'checkbox', name, {checked: element.checked});
+      } else if (element.matches('select')) {
+        // Indices describe the choice without transmitting answer text or values.
+        const selected = Array.from(element.options).flatMap((option, index) => option.selected ? [index] : []);
+        record('interactions', 'change', 'select', name, {
+          selected_indices: selected, option_count: element.options.length
+        });
+      }
+    }, {capture: true});
     let lastScroll = 0;
     doc.addEventListener('scroll', () => {
       if (Date.now() - lastScroll < 1000) return;
@@ -79,6 +94,17 @@
       record('conversation', 'scroll', editor ? 'editor' : 'page');
     }, {capture: true, passive: true});
     doc.addEventListener('keydown', event => {
+      const element = event.target;
+      const editable = element?.nodeType === 1 && (element.isContentEditable
+        || element.matches('textarea,input:not([type]),input[type="text"],input[type="search"],input[type="email"],input[type="url"],input[type="tel"],input[type="number"]'));
+      if (editable && !event.ctrlKey && !event.metaKey && !event.altKey
+          && (event.key.length === 1 || ['Backspace', 'Delete', 'Enter'].includes(event.key))) {
+        const type = editor ? 'editor' : element.tagName.toLowerCase();
+        const name = editor ? 'answer-editor' : (element.getAttribute('name') || element.id || type);
+        record('interactions', 'keydown', type, name, {
+          keyboard_action: event.key.length === 1 ? 'typing' : 'editing'
+        });
+      }
       if (event.code === 'F12' || (event.code === 'KeyI' && event.ctrlKey && event.shiftKey)) {
         record('devtools', 'keydown');
       }

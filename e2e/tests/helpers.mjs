@@ -23,10 +23,18 @@ export async function login(page, target = demo.playground, username = 'student'
     throw new Error(`Moodle PHP error at ${page.url()}: ${body.slice(0, 2000)}`);
   }
   await expect(page.locator('#username')).toBeVisible();
-  // Moodle core/togglesensitive replaces the password input asynchronously.
-  // Wait for the replacement before filling: outerHTML loses a typed value.
-  await expect(page.locator('#login .login-form-password .toggle-sensitive-btn'),
-    'Moodle must finish replacing the password field before login').toHaveCount(1);
+  // The core login template can initialise core/togglesensitive, which replaces
+  // the password input asynchronously and loses an already typed value.
+  // Theme overrides (e.g. Boost Union 4.3) may not initialise that module at all.
+  // Inspect the rendered initialisation, rather than assuming a theme's markup.
+  const usesPasswordToggle = await page.evaluate(() =>
+    Array.from(document.scripts).some(script => !script.src
+      && /require\s*\(\s*\[[^\]]*['"]core\/togglesensitive['"]/.test(script.textContent ?? '')));
+  if (usesPasswordToggle) {
+    await expect(page.locator('#login .login-form-password .toggle-sensitive-btn'),
+      'Moodle must finish the requested password field replacement before login').toHaveCount(1);
+  }
+  await expect(page.locator('#password')).toBeVisible();
   await page.locator('#username').fill(username);
   await page.locator('#password').fill(process.env.MOODLE_STUDENT_PASSWORD);
   const [loginRequest] = await Promise.all([

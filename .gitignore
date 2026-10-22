@@ -16,3 +16,6 @@ e2e/npm-cache/
 *.tar
 *.tar.gz
 *Zone.Identifier*
+
+/prod_moodle/
+/prod-plugin-inventory.tsv

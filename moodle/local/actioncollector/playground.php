@@ -23,6 +23,8 @@ echo '<p>Copy text into the field, click the button, scroll and switch tabs. Eve
 echo '<p id="copy-source">Sample solution: 2 + 2 = 4. Select and copy this sentence.</p>';
 echo '<button type="button" id="collector-demo-button" class="btn btn-primary">Demo button</button>';
 echo '<p><textarea id="collector-demo-answer" name="demo-answer" rows="5" cols="60" aria-label="Demo answer"></textarea></p>';
+echo '<p><label><input id="collector-demo-checkbox" name="demo-checkbox" type="checkbox"> Demo checkbox</label></p>';
+echo '<p><label for="collector-demo-select">Demo select</label><select id="collector-demo-select" name="demo-select"><option value="">Choose</option><option value="alpha">First</option><option value="beta">Second</option></select></p>';
 echo '<div style="min-height:1400px;background:linear-gradient(#eef,#fff)"><p>Scroll down.</p></div>';
 echo html_writer::link(new moodle_url('/course/view.php', ['id' => $course->id]), 'Return to demo course');
 echo $OUTPUT->footer();

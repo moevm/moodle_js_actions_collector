@@ -675,6 +675,29 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    EventDetails:
+      type: object
+      properties:
+        checked:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+        selected_indices:
+          anyOf:
+          - type: array
+            items:
+              type: integer
+          - type: 'null'
+        option_count:
+          anyOf:
+          - type: integer
+            minimum: 0
+          - type: 'null'
+        keyboard_action:
+          anyOf:
+          - type: string
+            enum: [typing, editing]
+          - type: 'null'
     Payload:
       properties:
         timestamp:
@@ -697,6 +720,10 @@ components:
           type: string
           title: Element Html
           description: The HTML content of the element
+        details:
+          anyOf:
+          - $ref: '#/components/schemas/EventDetails'
+          - type: 'null'
       type: object
       required:
       - element_type
