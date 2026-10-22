@@ -4,11 +4,24 @@
   const config = window.actionCollectorConfig;
   if (!config || window.actionCollector || !config.user) return;
   const api = config.apiUrl.replace(/\/$/, '');
-  const state = {ready: false, queued: 0, sent: 0, error: null};
+  const MAX_QUEUE_EVENTS = 500;
+  const MAX_QUEUE_BYTES = 256 * 1024;
+  const MAX_BATCH_EVENTS = 20;
+  const MAX_BATCH_BYTES = 48 * 1024;
+  const MIN_SEND_INTERVAL = 1000;
+  const MAX_RETRY_DELAY = 30000;
+  const encoder = new TextEncoder();
+  const state = {ready: false, queued: 0, queuedBytes: 0, sent: 0, dropped: 0, retryAt: 0, error: null};
   window.actionCollector = state;
   let queue = [];
+  let queueBytes = 0;
+  let active = [];
+  let activeBytes = 0;
   let base;
+  let baseBytes = 0;
   let flight;
+  let nextSendAt = 0;
+  let failures = 0;
   let closing = false;
   const documents = new WeakSet();
 
@@ -26,35 +39,82 @@
     } finally { clearTimeout(timer); }
   }
 
-  function flush(keepalive = true) {
+  function syncQueueState() {
+    state.queued = queue.length + active.length;
+    state.queuedBytes = queueBytes + activeBytes;
+  }
+
+  function trimQueue() {
+    // Never remove a batch that is already in flight. Older pending events
+    // are expendable: telemetry must not consume unbounded student memory.
+    while (queue.length && (queue.length + active.length > MAX_QUEUE_EVENTS
+        || queueBytes + activeBytes > MAX_QUEUE_BYTES)) {
+      queueBytes -= queue.shift().bytes;
+      state.dropped++;
+    }
+    syncQueueState();
+  }
+
+  function flush(final = false) {
     if (flight) return flight;
     if (!base || !queue.length) return Promise.resolve();
+    const now = Date.now();
+    // A page exit may bypass the normal cadence once, but not failure backoff.
+    if (now < state.retryAt || (!final && now < nextSendAt)) return Promise.resolve();
+    let bodyBytes = baseBytes;
+    let count = 0;
+    while (count < queue.length && count < MAX_BATCH_EVENTS) {
+      const extra = queue[count].bytes + (count ? 1 : 0);
+      if (bodyBytes + extra > MAX_BATCH_BYTES) break;
+      bodyBytes += extra;
+      count++;
+    }
+    if (!count) return Promise.resolve();
+    active = queue.splice(0, count);
+    activeBytes = active.reduce((total, entry) => total + entry.bytes, 0);
+    queueBytes -= activeBytes;
+    syncQueueState();
+    nextSendAt = now + MIN_SEND_INTERVAL;
     flight = (async () => {
-      while (queue.length) {
-        const batch = queue.slice(0, 10);
-        await post('/statistics/', {...base, actions: batch}, keepalive);
-        queue.splice(0, batch.length);
-        state.sent += batch.length;
-        state.queued = queue.length;
-        state.error = null;
-      }
+      await post('/statistics/', {...base, actions: active.map(entry => entry.action)}, true);
+      state.sent += active.length;
+      active = [];
+      activeBytes = 0;
+      failures = 0;
+      state.retryAt = 0;
+      state.error = null;
     })().catch(error => {
+      queue = active.concat(queue);
+      queueBytes += activeBytes;
+      active = [];
+      activeBytes = 0;
+      trimQueue();
+      failures = Math.min(failures + 1, 5);
+      const delay = Math.min(MAX_RETRY_DELAY, 2000 * 2 ** (failures - 1));
+      state.retryAt = Date.now() + Math.min(MAX_RETRY_DELAY, delay + Math.floor(Math.random() * delay * 0.25));
       state.error = String(error);
       console.warn('[collector] delivery failed', error);
-    }).finally(() => { flight = null; });
+    }).finally(() => { syncQueueState(); flight = null; });
     return flight;
   }
-  state.flush = flush;
+  state.flush = () => flush();
 
   function record(action, event, type = 'page', name = 'page', details) {
-    queue.push({
+    const entry = {
       timestamp: new Date().toISOString(), action_type: action, event_type: event,
       element_type: type, element_name: String(name).slice(0, 160),
       // Do not transmit field contents, passwords or clipboard text.
       element_html: type === 'page' ? '' : '<' + type + '>',
       ...(details ? {details} : {})
-    });
-    state.queued = queue.length;
+    };
+    const bytes = encoder.encode(JSON.stringify(entry)).byteLength;
+    if (baseBytes + bytes > MAX_BATCH_BYTES) {
+      state.dropped++;
+      return;
+    }
+    queue.push({action: entry, bytes});
+    queueBytes += bytes;
+    trimQueue();
     if (queue.length >= 5) void flush();
   }
 
@@ -137,13 +197,14 @@
       }
     } catch (_) { tabID = 'tab-' + Date.now() + '-' + Math.random().toString(36).slice(2); }
     base = {...config.user, session_id: pageId, tabID, url: location.href};
+    baseBytes = encoder.encode(JSON.stringify({...base, actions: []})).byteLength;
     state.ready = true;
     record('open', 'open page');
     bindDocument(document);
     bindEditors();
     document.addEventListener('visibilitychange', () => {
       record(document.visibilityState, 'visibilitychange');
-      if (document.visibilityState === 'hidden') void flush(true);
+      if (document.visibilityState === 'hidden') void flush();
     });
     window.addEventListener('pagehide', () => {
       if (closing) return;

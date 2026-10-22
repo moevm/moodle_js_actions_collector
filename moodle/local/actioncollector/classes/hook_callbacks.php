@@ -4,7 +4,8 @@ defined('MOODLE_INTERNAL') || die();
 
 final class hook_callbacks {
     // Themes can replace the footer renderer and bypass its output hooks.
-    // Use the standard head hook; defer keeps the tracker behind DOM parsing.
+    // Use the standard head hook. Async loading does not gate DOMContentLoaded;
+    // the tracker itself checks readyState before touching the page.
     public static function head(\core\hook\output\before_standard_head_html_generation $hook): void {
         global $USER, $PAGE;
         if (!isloggedin() || isguestuser() || !get_config('local_actioncollector', 'enabled')) {
@@ -22,9 +23,9 @@ final class hook_callbacks {
             ],
         ];
         $json = json_encode($context, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
-        $url = new \moodle_url('/local/actioncollector/collector.js', ['v' => 2026102200]);
+        $url = new \moodle_url('/local/actioncollector/collector.js', ['v' => 2026102300]);
         $html = '<script>window.actionCollectorConfig = ' . $json . ';</script>'
-            . '<script src="' . s($url->out(false)) . '" defer></script>';
+            . '<script src="' . s($url->out(false)) . '" async></script>';
         $hook->add_html($html);
     }
 }
