@@ -23,6 +23,38 @@ test('interactions: saved page records the real browser user agent', async ({pag
   expect(browser).toContain('Chrome/'); // This suite explicitly runs Chromium.
 });
 
+test('interactions: page registration sends only metadata and keeps events linked', async ({page, request}) => {
+  const registrations = [];
+  page.on('request', outgoing => {
+    if (outgoing.method() === 'POST' && outgoing.url() === `${api}/statistics/page`) {
+      registrations.push(outgoing.postDataJSON());
+    }
+  });
+  const who = await setup(page);
+  const sent = registrations.filter(body => body.page === who.url);
+  expect(sent).toHaveLength(1);
+  expect(Object.keys(sent[0]).sort()).toEqual(['browser', 'page', 'title', 'window']);
+  expect(sent[0]).not.toHaveProperty('page_html');
+  expect(sent[0].title).toBe(await page.title());
+  expect(sent[0].browser).toBe(await page.evaluate(() => navigator.userAgent));
+  expect(sent[0].window).toEqual(await page.evaluate(() => ({width: innerWidth, height: innerHeight})));
+
+  const response = await request.get(`${api}/download/sessions`);
+  expect(response.ok()).toBeTruthy();
+  const pages = (await response.json()).filter(row => row.page === who.url);
+  expect(pages).toHaveLength(1);
+  expect(pages[0]).not.toHaveProperty('page_html');
+  expect(pages[0]).toMatchObject(sent[0]);
+
+  const eventsResponse = await request.get(`${api}/statistics/`, {params: {student_id: who.student_id, pageSize: -1}});
+  expect(eventsResponse.ok()).toBeTruthy();
+  const [batches] = await eventsResponse.json();
+  const own = batches.filter(row => row.url === who.url);
+  expect(own.length).toBeGreaterThan(0);
+  expect(own.every(row => row.session_id === pages[0]._id)).toBe(true);
+  expect(own.flatMap(row => row.actions).some(action => action.event_type === 'open page')).toBe(true);
+});
+
 test('interactions: real keyboard typing and deletion emit metadata without contents', async ({page, request}) => {
   const who = await setup(page);
   const secret = `answer-${randomUUID()}`;

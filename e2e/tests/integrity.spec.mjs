@@ -87,7 +87,7 @@ test('integrity: repeated tracker loading and flushing do not duplicate one clic
   expect(rows.flatMap(r => r.actions).filter(a => a.event_type === 'open page')).toHaveLength(1);
 });
 
-test('integrity: field values and clipboard contents stay out of events and page snapshots', async ({page, context, request}) => {
+test('integrity: field values and clipboard contents stay out of events and page metadata', async ({page, context, request}) => {
   await clipboardPermissions(context);
   await login(page);
   const secret = `private-${randomUUID()}`;
@@ -97,6 +97,7 @@ test('integrity: field values and clipboard contents stay out of events and page
   const url = target.href;
   await open(page, url);
   await expect(page.locator('#privacy-text')).toHaveValue(secret);
+  await expect(page.locator('body')).toContainText('Public fixture marker');
   await page.locator('#privacy-password').click();
   await page.locator('#privacy-password').fill(secret + '-typed');
   await page.locator('#privacy-editor').click();
@@ -114,11 +115,10 @@ test('integrity: field values and clipboard contents stay out of events and page
   expect(JSON.stringify(rows).includes(secret)).toBe(false);
   const response = await request.get(`${api}/download/sessions`);
   expect(response.ok()).toBeTruthy();
-  const snapshots = (await response.json()).filter(row => row.page === url);
-  expect(snapshots).toHaveLength(1);
-  expect(snapshots[0].page_html.includes('Public fixture marker'),
-    'Saved snapshot must contain the fixture marker; otherwise privacy was not exercised').toBe(true);
-  expect(JSON.stringify(snapshots).includes(secret)).toBe(false);
+  const pages = (await response.json()).filter(row => row.page === url);
+  expect(pages).toHaveLength(1);
+  expect(pages[0]).not.toHaveProperty('page_html');
+  expect(JSON.stringify(pages).includes(secret)).toBe(false);
 });
 
 test('integrity: blocked delivery retains events and retries automatically without duplicates', async ({page, request}) => {

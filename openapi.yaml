@@ -213,7 +213,7 @@ paths:
         required: true
       responses:
         '201':
-          description: Successful Response
+          description: Register page metadata without HTML
           content:
             application/json:
               schema:
@@ -514,7 +514,7 @@ paths:
       operationId: download_sessions_api_download_sessions_get
       responses:
         '200':
-          description: Download sessions
+          description: Download page metadata without HTML
           content:
             application/json:
               schema: {}
@@ -534,9 +534,6 @@ components:
         title:
           type: string
           title: Title
-        page_html:
-          type: string
-          title: Page Html
         window:
           $ref: '#/components/schemas/Window'
       type: object
@@ -544,13 +541,12 @@ components:
       - page
       - browser
       - title
-      - page_html
       - window
       title: CreatePageData
+      description: Page metadata only. Legacy page_html and other unknown fields are accepted but ignored.
       example:
         browser: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit
         page: http://e.moevm.info
-        page_html: <html></html>
         title: kakoy-to title
         window:
           height: 800

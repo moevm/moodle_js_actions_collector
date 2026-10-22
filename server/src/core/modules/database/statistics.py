@@ -5,6 +5,10 @@ from src.core.modules.database.errors import RepoNotFoundError
 from src.models.filter import SessionFilter
 
 
+PAGE_METADATA_FIELDS = ("page", "browser", "title", "window")
+PAGE_METADATA_PROJECTION = {field: 1 for field in PAGE_METADATA_FIELDS}
+
+
 class MongoStatisticRepo:
     def __init__(self, client):
         self.client = client
@@ -68,14 +72,19 @@ class MongoPageRepo:
         self.client = client
 
     async def create_record(self, page_data: dict) -> dict:
-        page = await self.client.sessions.insert_one(page_data)
-        new_page = await self.client.sessions.find_one({"_id": page.inserted_id})
+        # Keep legacy page_html out of storage even for internal callers.
+        metadata = {field: page_data[field] for field in PAGE_METADATA_FIELDS}
+        page = await self.client.sessions.insert_one(metadata)
+        new_page = await self.client.sessions.find_one(
+            {"_id": page.inserted_id}, PAGE_METADATA_PROJECTION
+        )
         new_page["_id"] = str(new_page["_id"])
         return new_page
 
     async def get_all_records(self) -> list:
         pages = []
-        for page in await self.client.sessions.find().to_list(length=None):
+        # Project in MongoDB so historical HTML is neither loaded nor exported.
+        for page in await self.client.sessions.find({}, PAGE_METADATA_PROJECTION).to_list(length=None):
             page["_id"] = str(page["_id"])
             pages.append(page)
         return pages

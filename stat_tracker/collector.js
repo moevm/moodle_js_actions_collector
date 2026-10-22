@@ -121,12 +121,10 @@
   }
 
   async function start() {
-    const clone = document.documentElement.cloneNode(true);
-    clone.querySelectorAll('script,style,input,textarea,select,[contenteditable="true"],iframe')
-      .forEach(node => node.remove());
+    // Register only metadata. Event handlers read the live DOM when needed;
+    // collecting events does not require copying or uploading the page HTML.
     const pageId = await post('/statistics/page', {
       page: location.href, browser: navigator.userAgent, title: document.title,
-      page_html: clone.outerHTML.slice(0, 200000),
       window: {width: innerWidth, height: innerHeight}
     });
     if (!/^[a-f0-9]{24}$/i.test(pageId)) throw new Error('Invalid page ID');

@@ -316,7 +316,6 @@ def create_mock_page_data():
         "page": "http://e.moevm.info",
         "title": "kakoy-to title",
         "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-        "page_html": '<html></html>',
         "window": {
             "width": 1200,
             "height": 800
@@ -330,7 +329,6 @@ async def repo_create_page():
         "page": "http://e.moevm.info",
         "title": "kakoy-to title",
         "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-        "page_html": '<html></html>',
         "window": {
             "width": 1200,
             "height": 800
@@ -344,7 +342,6 @@ async def repo_get_all_records():
             "page": "http://e.moevm.info",
             "title": "kakoy-to title",
             "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-            "page_html": '<html></html>',
             "window": {
                 "width": 1200,
                 "height": 800
@@ -355,7 +352,6 @@ async def repo_get_all_records():
             "page": "http://e.moevm.info",
             "title": "kakoy-to title",
             "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-            "page_html": '<html></html>',
             "window": {
                 "width": 1200,
                 "height": 800
