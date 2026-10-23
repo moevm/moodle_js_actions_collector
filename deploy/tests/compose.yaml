@@ -1,0 +1,25 @@
+services:
+  tests:
+    profiles: [test]
+    image: ${E2E_IMAGE:-moodle-actions-playwright:local}
+    build:
+      context: ../../e2e
+    init: true
+    shm_size: 1gb
+    user: '${E2E_UID:-1000}:${E2E_GID:-1000}'
+    environment:
+      HOME: /tmp
+      MOODLE_URL: ${MOODLE_URL:-http://localhost:18082}
+      COLLECTOR_URL: http://localhost:${COLLECTOR_PORT:-18081}
+      COLLECTOR_API_URL: ${COLLECTOR_API_URL:-http://localhost:18081/api}
+      COLLECTOR_API_PORT: ${COLLECTOR_API_PORT:-18080}
+      MOODLE_STUDENT_PASSWORD: ${MOODLE_STUDENT_PASSWORD:-StudentLocal123!}
+      COLLECTOR_ADMIN_EMAIL: ${COLLECTOR_ADMIN_EMAIL:-collector@example.com}
+      COLLECTOR_ADMIN_PASSWORD: ${COLLECTOR_ADMIN_PASSWORD:-CollectorLocal123!}
+    volumes:
+      - ../../reports/e2e:/work/artifacts
+    depends_on:
+      moodle: {condition: service_healthy}
+      frontend: {condition: service_healthy}
+      backend: {condition: service_healthy}
+    networks: [moodle, collector]

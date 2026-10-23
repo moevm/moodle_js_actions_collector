@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from bson import ObjectId
 from src.core.modules.database.errors import RepoNotFoundError
@@ -44,7 +44,10 @@ class StatisticsService:
         try:
             session_data['session_id'] = ObjectId(session_data['session_id'])
             for action in session_data["actions"]:
-                action["timestamp"] = datetime.fromisoformat(action["timestamp"])
+                value = datetime.fromisoformat(action["timestamp"])
+                if value.tzinfo is not None:
+                    value = value.astimezone(timezone.utc).replace(tzinfo=None)
+                action["timestamp"] = value
             return await self.repo.add_session(session_data)
         except Exception as e:
             logging.error(f'error creating session data {session_data}: {str(e)}')

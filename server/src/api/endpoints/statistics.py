@@ -12,7 +12,7 @@ from src.core.modules.service.errors import SessionNotFoundError
 from src.depends import get_statistics_service
 from src.models.filter import SessionFilter
 from src.models.session_data import SessionData, CreateSessionData
-from src.models.session_data import PageData, CreatePageData
+from src.models.session_data import CreatePageData
 
 router = APIRouter()
 download_router = APIRouter()
@@ -107,6 +107,7 @@ async def download_data(params: SessionFilter = Depends()):
 @router.post(
     "/page",
     status_code=status.HTTP_201_CREATED,
+    response_description="Register page metadata without HTML",
     response_model=str,
     response_model_by_alias=False
 )
@@ -121,7 +122,7 @@ async def create_page(page: CreatePageData = Body()):
 
 @download_router.get(
     "/sessions",
-    response_description="Download sessions"
+    response_description="Download page metadata without HTML"
 )
 async def download_sessions():
     try:

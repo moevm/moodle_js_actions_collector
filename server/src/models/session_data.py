@@ -1,7 +1,14 @@
 import uuid
 from pydantic import BaseModel, EmailStr, HttpUrl, Field
 from datetime import datetime
-from typing import List
+from typing import List, Optional, Literal
+
+
+class EventDetails(BaseModel):
+    checked: Optional[bool] = None
+    selected_indices: Optional[List[int]] = None
+    option_count: Optional[int] = Field(default=None, ge=0)
+    keyboard_action: Optional[Literal["typing", "editing"]] = None
 
 
 class Payload(BaseModel):
@@ -11,6 +18,7 @@ class Payload(BaseModel):
     action_type: str = Field(...)
     event_type: str = Field(...)
     element_html: str = Field(..., description="The HTML content of the element")
+    details: Optional[EventDetails] = None
 
     class Config:
         populate_by_field_name = True
@@ -193,7 +201,6 @@ class PageData(BaseModel):
     page: HttpUrl = Field(...)
     browser: str = Field(...)
     title: str = Field(...)
-    page_html: str = Field(...)
     window: Window = Field(...)
 
     class Config:
@@ -205,7 +212,6 @@ class PageData(BaseModel):
                 "page": "http://e.moevm.info",
                 "title": "kakoy-to title",
                 "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-                "page_html": '<html></html>',
                 "window": {
                     "width": 1200,
                     "height": 800
@@ -215,21 +221,23 @@ class PageData(BaseModel):
 
 
 class CreatePageData(BaseModel):
+    """Page metadata only; legacy page_html and other unknown fields are ignored."""
+
     page: HttpUrl = Field(...)
     browser: str = Field(...)
     title: str = Field(...)
-    page_html: str = Field(...)
     window: Window = Field(...)
 
     class Config:
         populate_by_field_name = True
         arbitrary_types_allowed = True
+        # Accept older plugins, but discard their HTML before saving metadata.
+        extra = "ignore"
         json_schema_extra = {
             "example": {
                 "page": "http://e.moevm.info",
                 "title": "kakoy-to title",
                 "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-                "page_html": '<html></html>',
                 "window": {
                     "width": 1200,
                     "height": 800

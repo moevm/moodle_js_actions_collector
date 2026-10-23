@@ -58,4 +58,3 @@ class UserService:
                 raise UserNotFoundError(f'error deleting user {user_id}: {str(e)}') from e
             else:
                 raise
-

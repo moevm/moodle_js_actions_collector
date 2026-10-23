@@ -17,7 +17,7 @@ async def test_get_all_sessions():
     mock_filter = create_mock_filter()
 
     repository = MongoStatisticRepo(mock_client)
-    
+
     # Act
     result = await repository.get_all_sessions(mock_filter)
     stats = result[0]
@@ -35,7 +35,7 @@ async def test_get_session_success():
     mock_client.statistics.find_one.return_value = find_one()
 
     repository = MongoStatisticRepo(mock_client)
-    
+
     # Act
     result = await repository.get_session(record_id)
 
@@ -52,7 +52,7 @@ async def test_add_session():
     mock_client.statistics.find_one.return_value = find_one()
 
     repository = MongoStatisticRepo(mock_client)
-    
+
     # Act
     result = await repository.add_session({
         "actions": [
@@ -85,7 +85,7 @@ async def test_delete_session_success():
     mock_client.statistics.delete_one.return_value = delete_one()
 
     repository = MongoStatisticRepo(mock_client)
-    
+
     # Act
     result = await repository.delete_session(record_id)
 

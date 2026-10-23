@@ -1,7 +1,6 @@
-FROM python:3.12.2-alpine3.19
-ENV PATH=$PATH:root/.local/bin
-COPY ./requirements.txt .
-RUN pip install --user -r requirements.txt
-COPY . ./
-ENV TZ="Europe/Moscow"
+FROM python:3.12-slim-bookworm
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
 CMD ["python", "-u", "main.py"]

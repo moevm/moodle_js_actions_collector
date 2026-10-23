@@ -1,0 +1,12 @@
+# Local runtime corrections; keeps existing images and database volumes.
+services:
+  moodle:
+    volumes:
+      - ./deploy/moodle/seed.php:/opt/moodle/seed.php:ro
+      - ./moodle/local/actioncollector/classes/hook_callbacks.php:/var/www/html/local/actioncollector/classes/hook_callbacks.php:ro
+  frontend:
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:8080/']
+      interval: 5s
+      timeout: 5s
+      retries: 30

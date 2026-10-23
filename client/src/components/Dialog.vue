@@ -11,7 +11,7 @@
         <v-checkbox
           v-model="selected"
           :disabled="downloading"
-          label="Html-код страниц в формате json"
+          label="Метаданные страниц в формате json (без HTML)"
           value="pages"
         ></v-checkbox>
         <v-alert v-if="errorMessage" type="error" variant="tonal" role="alert">
@@ -36,7 +36,7 @@
 <script>
 import axios from "axios";
 const STAT_FILE_URL = "/api/download/statistics";
-const HTMLPAGE_FILE_URL = "/api/download/sessions";
+const PAGE_METADATA_FILE_URL = "/api/download/sessions";
 
 export default {
   emits: ["close"],
@@ -52,7 +52,7 @@ export default {
   methods: {
     getUrl(file){
       if (file === "statistics") return STAT_FILE_URL
-      return HTMLPAGE_FILE_URL
+      return PAGE_METADATA_FILE_URL
     },
     async download() {
       if (this.downloading || !this.selected.length) return;
