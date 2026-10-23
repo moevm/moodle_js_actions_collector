@@ -1,6 +1,8 @@
 services:
   mongodb:
     image: mongo:8.0.13
+    cpus: 2.0
+    mem_limit: 2G
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-collectorroot}
@@ -20,6 +22,8 @@ services:
   backend:
     build:
       context: ../../server
+    cpus: 2.0
+    mem_limit: 2G
     restart: unless-stopped
     environment:
       MONGODB_ROOT_USER: ${MONGO_ROOT_USER:-collectorroot}
