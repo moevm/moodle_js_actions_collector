@@ -1,100 +1,55 @@
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
+
 import pytest
+from bson import ObjectId
 
 from src.core.modules.database.statistics import MongoPageRepo
 
 
-@pytest.mark.asyncio
-async def test_create_record():
-    # Arrange
-    mock_client = Mock()
-    mock_client.sessions.insert_one.return_value = insert_one()
-    mock_client.sessions.find_one.return_value = find_one()
-    expected_id = '60d5ec49f1a4a21f6c8b4567'
-    page_data = create_page_data()
-    repository = MongoPageRepo(mock_client)
-
-    # Act
-    result = await repository.create_record(page_data)
-
-    # Assert
-    assert result["_id"] == expected_id
-    assert result["window"]["width"] and result["window"]["height"]
+@pytest.fixture
+def metadata() -> dict:
+    return {
+        "page": "https://moodle.example/mod/page/view.php?id=7",
+        "title": "Reading",
+        "browser": "Mozilla/5.0 test browser",
+        "window": {"width": 1200, "height": 800},
+    }
 
 
 @pytest.mark.asyncio
-async def test_get_all_records():
-    # Arrange
-    mock_client = Mock()
-    mock_client.sessions.find.return_value.to_list.return_value = \
-          find_to_list()
-    expected_id_1 = '60d5ec49f1a4a21f6c8b4567'
-    expected_id_2 = '60d5ec49f1a4a21f6c8b4568'
-    repository = MongoPageRepo(mock_client)
-    
-    # Act
-    result = await repository.get_all_records()
+@pytest.mark.parametrize("legacy_html", [None, "<html>private legacy page</html>"])
+async def test_create_record_saves_only_metadata(metadata: dict, legacy_html: str | None) -> None:
+    record_id = ObjectId()
+    client = Mock()
+    client.sessions.insert_one = AsyncMock(return_value=Mock(inserted_id=record_id))
+    client.sessions.find_one = AsyncMock(return_value={"_id": record_id, **metadata})
+    payload = dict(metadata)
+    if legacy_html is not None:
+        payload["page_html"] = legacy_html
 
-    # Assert
-    assert len(result) == 2
-    assert int(result[0]["_id"], 16)
-    assert int(result[1]["_id"], 16)
-    assert result[0]["_id"] == expected_id_1
-    assert result[1]["_id"] == expected_id_2
+    result = await MongoPageRepo(client).create_record(payload)
 
-async def insert_one():
-    class CreatedPage:
-        def __init__(self):
-            self.inserted_id = "60d5ec49f1a4a21f6c8b4567"
-            self.id = "60d5ec49f1a4a21f6c8b4567"
+    client.sessions.insert_one.assert_awaited_once_with(metadata)
+    assert result == {"_id": str(record_id), **metadata}
+    assert "page_html" not in result
+    # An internal caller's input must not be mutated to remove a legacy field.
+    if legacy_html is not None:
+        assert payload["page_html"] == legacy_html
 
-    return CreatedPage()
 
-async def find_one():
-    return {
-        "_id": "60d5ec49f1a4a21f6c8b4567",
-        "page": "http://e.moevm.info",
-        "title": "kakoy-to title",
-        "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-        "page_html": '<html></html>',
-        "window": {
-            "width": 1200,
-            "height": 800
-        }
-    }
+@pytest.mark.asyncio
+async def test_export_requests_only_metadata_from_mongodb(metadata: dict) -> None:
+    record_id = ObjectId()
+    client = Mock()
+    cursor = Mock()
+    cursor.to_list = AsyncMock(return_value=[{"_id": record_id, **metadata}])
+    client.sessions.find.return_value = cursor
 
-def create_page_data():
-    return {
-        "page": "http://e.moevm.info",
-        "title": "kakoy-to title",
-        "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-        "page_html": '<html></html>',
-        "window": {
-            "width": 1200,
-            "height": 800
-        }
-    }
+    result = await MongoPageRepo(client).get_all_records()
 
-async def find_to_list():
-    return [{
-            "_id": "60d5ec49f1a4a21f6c8b4567",
-            "page": "http://e.moevm.info",
-            "title": "kakoy-to title",
-            "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-            "page_html": '<html></html>',
-            "window": {
-                "width": 1200,
-                "height": 800
-            }
-        }, 
-        {
-            "_id": "60d5ec49f1a4a21f6c8b4568",
-            "page": "http://e.moevm.info",
-            "title": "kakoy-to title",
-            "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-            "page_html": '<html></html>',
-            "window": {
-                "width": 1200,
-                "height": 800
-            }
-        }]
+    # An inclusion projection excludes historical HTML before it enters RAM.
+    client.sessions.find.assert_called_once_with(
+        {}, {"page": 1, "browser": 1, "title": 1, "window": 1}
+    )
+    assert result == [{"_id": str(record_id), **metadata}]
+    assert "page_html" not in result[0]

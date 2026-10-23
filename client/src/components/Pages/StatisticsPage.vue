@@ -48,23 +48,39 @@
         <button id="reset-search" class="reset-button" @click="resetSearch">Сброс</button>
       </div>
     </Filters>
-    <div class="col-md-12">
-      <button @click="prevPage">
-        Previous
+    <nav class="statistics-pagination" aria-label="Навигация по статистике">
+      <button type="button" class="statistics-pagination__button" @click="getStatistics">Обновить</button>
+      <button
+        type="button"
+        class="statistics-pagination__button"
+        :disabled="page <= 1"
+        @click="prevPage"
+      >
+        Назад
       </button>
-      <div class="mb-3">
-        Items per Page:
-        <select v-model="pageSize" @change="handlePageSizeChange($event)">
+      <div class="statistics-pagination__size">
+        <label for="statistics-page-size">На странице:</label>
+        <select
+          id="statistics-page-size"
+          class="statistics-pagination__select"
+          v-model="pageSize"
+          @change="handlePageSizeChange($event)"
+        >
           <option v-for="size in pageSizes" :key="size" :value="size">
-            {{ size }}
+            {{ size === -1 ? 'Все' : size }}
           </option>
         </select>
       </div>
-      <button @click="nextPage">
-        Next
+      <button
+        type="button"
+        class="statistics-pagination__button"
+        :disabled="pageSize == -1 || page >= totalPages"
+        @click="nextPage"
+      >
+        Вперёд
       </button>
-  </div>
-    <StatisticsTable v-if="selectedType === 'table'" 
+    </nav>
+    <StatisticsTable v-if="selectedType === 'table'"
       :info="statisticsInfo">
     </StatisticsTable>
     <Chart v-else :info="statisticsInfo"></Chart>
@@ -125,7 +141,8 @@ export default {
   },
 
   beforeMount() {
-    this.today = new Date().toISOString().slice(0, 16);
+    const now = new Date();
+    this.today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     let name = sessionStorage.getItem("name");
     if (name) {
       this.name = name;
@@ -222,6 +239,7 @@ export default {
 
     startSearchFilters() {
       this.startSearch = true;
+      this.page = 1;
       this.getStatistics();
     },
 
@@ -271,18 +289,18 @@ export default {
       }
       else if (this.beginTimestamp.length !== 0 && this.endTimestamp.length === 0) {
         this.params = {
-          begin_timestamp: this.beginTimestamp
+          begin_timestamp: new Date(this.beginTimestamp).toISOString()
         }
       }
       else if (this.beginTimestamp.length === 0 && this.endTimestamp.length !== 0) {
         this.params = {
-          end_timestamp: this.endTimestamp
+          end_timestamp: new Date(this.endTimestamp).toISOString()
         }
       }
       else {
         this.params = {
-          begin_timestamp: this.beginTimestamp,
-          end_timestamp: this.endTimestamp
+          begin_timestamp: new Date(this.beginTimestamp).toISOString(),
+          end_timestamp: new Date(this.endTimestamp).toISOString()
         }
       }
 
@@ -290,12 +308,12 @@ export default {
       Object.assign(this.params, searchParams)
 
       axios
-          .get(STAT_URL, {params: searchParams})
+          .get(STAT_URL, {params: this.params})
           .then((response) => {
             console.log(response);
             let stats = response.data[0]
             this.count = response.data[1]
-            this.totalPages = Math.ceil(this.count/this.pageSize)
+            this.totalPages = this.pageSize == -1 ? 1 : Math.max(1, Math.ceil(this.count/this.pageSize))
             stats.forEach(element => {
               let firstLayer = {
                 FIO: element.student,
@@ -311,7 +329,14 @@ export default {
                 secondLayer.eventType = action.event_type;
                 secondLayer.elementType = action.element_type;
                 secondLayer.elementName = action.element_name;
-                const dateTime = new Date(action.timestamp);
+                const details = action.details || {};
+                const descriptions = [];
+                if (typeof details.checked === 'boolean') descriptions.push(details.checked ? 'Отмечен' : 'Снят');
+                if (Array.isArray(details.selected_indices)) descriptions.push(`Индексы выбора: ${details.selected_indices.join(', ')}; вариантов: ${details.option_count}`);
+                if (details.keyboard_action) descriptions.push(details.keyboard_action === 'typing' ? 'Ввод с клавиатуры' : 'Редактирование с клавиатуры');
+                secondLayer.details = descriptions.join('; ');
+                const timestamp = action.timestamp;
+                const dateTime = new Date(/[zZ]$|[+-]\d\d:\d\d$/.test(timestamp) ? timestamp : timestamp + 'Z');
                 const hours = dateTime.getHours().toString().padStart(2, '0');
                 const minutes = dateTime.getMinutes().toString().padStart(2, '0');
                 const seconds = dateTime.getSeconds().toString().padStart(2, '0');
@@ -334,6 +359,66 @@ export default {
 
 <style>
 @import '@/colors.css';
+.statistics-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 96%;
+  margin: 12px auto;
+  padding: 12px 16px;
+  border: 1px solid var(--white-2);
+  border-radius: 8px;
+  background-color: var(--white-4);
+  color: var(--grey-4);
+}
+
+.statistics-pagination__size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statistics-pagination__button,
+.statistics-pagination__select {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--blue-2);
+  border-radius: 6px;
+  background-color: var(--white-1);
+  color: var(--blue-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+.statistics-pagination__button {
+  min-width: 96px;
+  font-weight: 600;
+}
+
+.statistics-pagination__select {
+  min-width: 80px;
+  appearance: auto;
+}
+
+.statistics-pagination__button:hover:not(:disabled),
+.statistics-pagination__select:hover {
+  background-color: var(--white-5);
+}
+
+.statistics-pagination__button:focus-visible,
+.statistics-pagination__select:focus-visible {
+  outline: 2px solid var(--blue-2);
+  outline-offset: 3px;
+}
+
+.statistics-pagination__button:disabled {
+  border-color: var(--grey-1);
+  background-color: var(--white-4);
+  color: var(--grey-7);
+  cursor: not-allowed;
+}
+
 .second-filter {
   padding-top: 0;
   padding-bottom: 0;
@@ -419,4 +504,3 @@ export default {
   margin-left: 50%;
 }
 </style>
-  

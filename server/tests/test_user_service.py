@@ -30,7 +30,7 @@ async def test_get_all_users_success():
     expected_id_1 = '60d5ec49f1a4a21f6c8b4567'
     expected_id_2 = '60d5ec49f1a4a21f6c8b4568'
     user_service = UserService(mock_repo)
-    
+
     # Act
     result = await user_service.get_all_users()
 
@@ -72,7 +72,7 @@ async def test_get_user_success():
         })
     expected_id = '60d5ec49f1a4a21f6c8b4567'
     user_service = UserService(mock_repo)
-    
+
     # Act
     result = await user_service.get_user(expected_id)
 
@@ -112,7 +112,7 @@ async def test_create_user_success():
         })
     expected_id = '60d5ec49f1a4a21f6c8b4567'
     user_service = UserService(mock_repo)
-    
+
     # Act
     result = await user_service.create_user({})
 
@@ -153,7 +153,7 @@ async def test_update_user_success():
         })
     expected_id = '60d5ec49f1a4a21f6c8b4567'
     user_service = UserService(mock_repo)
-    
+
     # Act
     result = await user_service.update_user(expected_id, UpdateUser(
         name='Иван', position='admin', password='sdfsdfwgesdgcx', surname='Иванов', lastname='Иванович',
@@ -212,7 +212,7 @@ async def test_delete_user_success():
     mock_repo.delete_user = AsyncMock(return_value=value_to_return)
     expected_id = '60d5ec49f1a4a21f6c8b4567'
     user_service = UserService(mock_repo)
-    
+
     # Act
     result = await user_service.delete_user(expected_id)
 

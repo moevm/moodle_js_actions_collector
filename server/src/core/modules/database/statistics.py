@@ -5,6 +5,10 @@ from src.core.modules.database.errors import RepoNotFoundError
 from src.models.filter import SessionFilter
 
 
+PAGE_METADATA_FIELDS = ("page", "browser", "title", "window")
+PAGE_METADATA_PROJECTION = {field: 1 for field in PAGE_METADATA_FIELDS}
+
+
 class MongoStatisticRepo:
     def __init__(self, client):
         self.client = client
@@ -12,7 +16,7 @@ class MongoStatisticRepo:
     async def get_all_sessions(self, filters: SessionFilter) -> list:
         stats = []
         query, pages = filters.query()
-        start = (pages['page']-1)*pages['pageSize']
+        start = 0 if pages['pageSize'] == -1 else (pages['page']-1)*pages['pageSize']
         total_rows = await self.client.statistics.count_documents(query)
         pageSize = total_rows if pages['pageSize'] == -1 else pages['pageSize']
         for session in await self.client.statistics.find(query).sort({"_id": -1}).skip(start).limit(pageSize).to_list(length=None):
@@ -49,13 +53,13 @@ def filter_actions(query: SessionFilter, payload: list) -> list:
         return payload
     data = deepcopy(payload)
     if query.action_type:
-        data = filter(lambda item: query.action_type in str(item['action_type']), data)
+        data = filter(lambda item: query.action_type.lower() in str(item['action_type']).lower(), data)
     if query.event_type:
-        data = filter(lambda item: query.event_type in str(item['event_type']), data)
+        data = filter(lambda item: query.event_type.lower() in str(item['event_type']).lower(), data)
     if query.element_type:
-        data = filter(lambda item: query.element_type in str(item['element_type']), data)
+        data = filter(lambda item: query.element_type.lower() in str(item['element_type']).lower(), data)
     if query.element_name:
-        data = filter(lambda item: query.element_name in str(item['element_name']), data)
+        data = filter(lambda item: query.element_name.lower() in str(item['element_name']).lower(), data)
     if query.begin_timestamp:
         data = filter(lambda item: query.begin_timestamp <= item['timestamp'], data)
     if query.end_timestamp:
@@ -68,14 +72,19 @@ class MongoPageRepo:
         self.client = client
 
     async def create_record(self, page_data: dict) -> dict:
-        page = await self.client.sessions.insert_one(page_data)
-        new_page = await self.client.sessions.find_one({"_id": page.inserted_id})
+        # Keep legacy page_html out of storage even for internal callers.
+        metadata = {field: page_data[field] for field in PAGE_METADATA_FIELDS}
+        page = await self.client.sessions.insert_one(metadata)
+        new_page = await self.client.sessions.find_one(
+            {"_id": page.inserted_id}, PAGE_METADATA_PROJECTION
+        )
         new_page["_id"] = str(new_page["_id"])
         return new_page
 
     async def get_all_records(self) -> list:
         pages = []
-        for page in await self.client.sessions.find().to_list(length=None):
+        # Project in MongoDB so historical HTML is neither loaded nor exported.
+        for page in await self.client.sessions.find({}, PAGE_METADATA_PROJECTION).to_list(length=None):
             page["_id"] = str(page["_id"])
             pages.append(page)
         return pages

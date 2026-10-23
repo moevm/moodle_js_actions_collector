@@ -1,0 +1,5 @@
+# Explicit optional frontend build from a locally available client/dist snapshot.
+services:
+  frontend:
+    build:
+      dockerfile: Dockerfile.prebuilt

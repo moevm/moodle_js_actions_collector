@@ -1,24 +1,37 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi.params import Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class SessionFilter(BaseModel):
-    page: int
-    pageSize: int
-    begin_timestamp: Optional[datetime] = Field(Query(default=None, description="start date"))
-    end_timestamp: Optional[datetime] = Field(Query(default=None, description="stop date"))
-    student_id: Optional[int] = Field(Query(default=None, description="student moodle id"))
-    student_name: Optional[str] = Field(Query(default=None, description="student FIO"))
-    student_email: Optional[str] = Field(Query(default=None, description="student email"))
-    course_title: Optional[str] = Field(Query(default=None, description="name of the course"))
-    action_type: Optional[str] = Field(Query(default=None, description="action type"))
-    event_type: Optional[str] = Field(Query(default=None, description="event type"))
-    element_type: Optional[str] = Field(Query(default=None, description="element type"))
-    element_name: Optional[str] = Field(Query(default=None, description="element name"))
+    page: int = Field(default=1, ge=1)
+    pageSize: int = Field(default=10, ge=-1)
+    begin_timestamp: Optional[datetime] = Field(default=None, description="start date")
+    end_timestamp: Optional[datetime] = Field(default=None, description="stop date")
+    student_id: Optional[int] = Field(default=None, description="student moodle id")
+    student_name: Optional[str] = Field(default=None, description="student FIO")
+    student_email: Optional[str] = Field(default=None, description="student email")
+    course_title: Optional[str] = Field(default=None, description="name of the course")
+    action_type: Optional[str] = Field(default=None, description="action type")
+    event_type: Optional[str] = Field(default=None, description="event type")
+    element_type: Optional[str] = Field(default=None, description="element type")
+    element_name: Optional[str] = Field(default=None, description="element name")
 
+
+    @field_validator("begin_timestamp", "end_timestamp")
+    @classmethod
+    def utc_timestamp(cls, value):
+        if value is not None and value.tzinfo is not None:
+            return value.astimezone(timezone.utc).replace(tzinfo=None)
+        return value
+
+    @field_validator("pageSize")
+    @classmethod
+    def valid_page_size(cls, value):
+        if value == 0:
+            raise ValueError("pageSize must be positive or -1")
+        return value
 
     def query(self):
         filter_dict = {}
