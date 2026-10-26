@@ -1,19 +1,19 @@
-import os
 from typing import List
 
-import bson.json_util as json
 from fastapi import APIRouter, HTTPException, Body, Depends
 from fastapi.encoders import jsonable_encoder
 from starlette import status
 
-from starlette.responses import Response, FileResponse
+from starlette.responses import Response
+
+from src.api.exports import json_export
 
 from src.core.modules.service.errors import SessionNotFoundError
 from src.depends import (
     get_statistics_service, require_storage_capacity, STORAGE_WRITE_RESPONSES,
     require_current_user, require_admin, require_ingestion_key,
 )
-from src.models.filter import SessionFilter
+from src.models.filter import SessionFilter, StatisticsFilter
 from src.models.session_data import SessionData, CreateSessionData
 from src.models.session_data import CreatePageData
 
@@ -95,22 +95,11 @@ async def delete_session(session_id: str):
 
 @download_router.get(
     "/statistics",
-    response_description="Download statistics"
+    response_description="Stream all statistics matching the filters, without table pagination",
+    responses={429: {"description": "Another export is running"}, 503: {"description": "Export unavailable"}}
 )
-async def download_data(params: SessionFilter = Depends()):
-    try:
-        data = await service.get_all_sessions(params)
-        with open(os.path.join(os.path.curdir, 'data.json'), mode='w+b') as f:
-            f.truncate(0)
-            f.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
-        return FileResponse(
-            os.path.join(os.path.curdir, 'data.json'),
-            filename="data.json",
-            headers={"Cache-Control": "no-store"},
-            media_type='application/octet-stream'
-        )
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+async def download_data(params: StatisticsFilter = Depends()):
+    return await json_export(service.iter_sessions(params), filename="data.json", with_total=True)
 
 
 @router.post(
@@ -133,19 +122,8 @@ async def create_page(page: CreatePageData = Body()):
 
 @download_router.get(
     "/sessions",
-    response_description="Download page metadata without HTML"
+    response_description="Stream page metadata without HTML",
+    responses={429: {"description": "Another export is running"}, 503: {"description": "Export unavailable"}}
 )
 async def download_sessions():
-    try:
-        data = await service.get_pages()
-        with open(os.path.join(os.path.curdir, 'sessions.json'), mode='w+b') as f:
-            f.truncate(0)
-            f.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
-        return FileResponse(
-            os.path.join(os.path.curdir, 'sessions.json'),
-            filename="sessions.json",
-            headers={"Cache-Control": "no-store"},
-            media_type='application/octet-stream'
-        )
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    return await json_export(service.iter_pages(), filename="sessions.json")

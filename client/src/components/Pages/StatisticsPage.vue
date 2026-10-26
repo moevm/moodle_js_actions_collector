@@ -67,14 +67,14 @@
           @change="handlePageSizeChange($event)"
         >
           <option v-for="size in pageSizes" :key="size" :value="size">
-            {{ size === -1 ? 'Все' : size }}
+            {{ size }}
           </option>
         </select>
       </div>
       <button
         type="button"
         class="statistics-pagination__button"
-        :disabled="pageSize == -1 || page >= totalPages"
+        :disabled="page >= totalPages"
         @click="nextPage"
       >
         Вперёд
@@ -135,7 +135,7 @@ export default {
       page: 1,
       count: 1,
       pageSize: 10,
-      pageSizes: [5,10,15,20,25,-1],
+      pageSizes: [5,10,15,20,25,50,100],
       totalPages: 1,
     };
   },
@@ -224,7 +224,7 @@ export default {
     },
 
     handlePageSizeChange(event) {
-      this.pageSize = event.target.value;
+      this.pageSize = Number(event.target.value);
       this.page = 1;
       this.getStatistics();
     },
@@ -313,7 +313,7 @@ export default {
             console.log(response);
             let stats = response.data[0]
             this.count = response.data[1]
-            this.totalPages = this.pageSize == -1 ? 1 : Math.max(1, Math.ceil(this.count/this.pageSize))
+            this.totalPages = Math.max(1, Math.ceil(this.count/this.pageSize))
             stats.forEach(element => {
               let firstLayer = {
                 FIO: element.student,

@@ -11,9 +11,11 @@ async def test_get_all_sessions():
     mock_client = Mock()
     mock_client.statistics = Mock()
     mock_client.statistics.count_documents = AsyncMock(return_value=100)
-    mock_client.statistics.find.return_value.sort.return_value.skip.return_value.limit.return_value.to_list = AsyncMock(
-        return_value=find_to_list()
-    )
+    cursor = mock_client.statistics.find.return_value
+    for method in ("sort", "skip", "limit", "max_time_ms"):
+        getattr(cursor, method).return_value = cursor
+    cursor.to_list = AsyncMock(return_value=find_to_list())
+    cursor.close = AsyncMock()
     mock_filter = create_mock_filter()
 
     repository = MongoStatisticRepo(mock_client)
@@ -25,6 +27,8 @@ async def test_get_all_sessions():
     # Assert
     assert len(stats) == 1
     assert stats[0]["session_id"] == "2"
+    cursor.to_list.assert_awaited_once_with(length=5)
+    cursor.close.assert_awaited_once()
 
 
 @pytest.mark.asyncio

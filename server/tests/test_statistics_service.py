@@ -177,12 +177,15 @@ async def test_get_pages_success():
     mock_page = Mock()
     expected_id_1 = '60d5ec49f1a4a21f6c8b4567'
     expected_id_2 = '60d5ec49f1a4a21f6c8b4568'
-    mock_page.get_all_records.return_value = repo_get_all_records()
+    async def records():
+        for record in await repo_get_all_records():
+            yield record
+    mock_page.iter_records.side_effect = records
 
     service = StatisticsService(None, mock_page)
 
     # Act
-    result = await service.get_pages()
+    result = [record async for record in service.iter_pages()]
 
     # Assert
     assert len(result) == 2
@@ -196,13 +199,16 @@ async def test_get_pages_success():
 async def test_get_pages_fail():
     # Arrange
     mock_page = Mock()
-    mock_page.get_all_records.side_effect = Exception()
+    async def records():
+        raise RuntimeError("Page read failed")
+        yield  # An async generator fails when consumption starts.
+    mock_page.iter_records.side_effect = records
 
     service = StatisticsService(None, mock_page)
 
     try:
         # Act
-        result = await service.get_pages()
+        result = [record async for record in service.iter_pages()]
     except Exception as e:
         # Assert
         assert isinstance(e, Exception)

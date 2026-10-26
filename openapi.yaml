@@ -10,23 +10,9 @@ paths:
       - statistics
       summary: Get All Sessions
       operationId: get_all_sessions_api_statistics__get
+      security:
+      - UserAccessToken: []
       parameters:
-      - name: page
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-          title: Page
-      - name: pageSize
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: -1
-          default: 10
-          title: Pagesize
       - name: begin_timestamp
         in: query
         required: false
@@ -109,6 +95,23 @@ paths:
           - type: string
           - type: 'null'
           title: Element Name
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 10
+          title: Pagesize
       responses:
         '200':
           description: Get statistics
@@ -124,8 +127,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - UserAccessToken: []
     post:
       tags:
       - api
@@ -438,23 +439,9 @@ paths:
       - download
       summary: Download Data
       operationId: download_data_api_download_statistics_get
+      security:
+      - UserAccessToken: []
       parameters:
-      - name: page
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-          title: Page
-      - name: pageSize
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: -1
-          default: 10
-          title: Pagesize
       - name: begin_timestamp
         in: query
         required: false
@@ -539,18 +526,20 @@ paths:
           title: Element Name
       responses:
         '200':
-          description: Download statistics
+          description: Stream all statistics matching the filters, without table pagination
           content:
             application/json:
               schema: {}
+        '429':
+          description: Another export is running
+        '503':
+          description: Export unavailable
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - UserAccessToken: []
   /api/download/sessions:
     get:
       tags:
@@ -560,10 +549,14 @@ paths:
       operationId: download_sessions_api_download_sessions_get
       responses:
         '200':
-          description: Download page metadata without HTML
+          description: Stream page metadata without HTML
           content:
             application/json:
               schema: {}
+        '429':
+          description: Another export is running
+        '503':
+          description: Export unavailable
       security:
       - UserAccessToken: []
   /api/healthcheck/storage:

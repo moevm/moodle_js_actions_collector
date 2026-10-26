@@ -76,13 +76,20 @@ export async function identity(page) {
   return page.evaluate(() => ({url: window.location.href, ...window.actionCollectorConfig.user}));
 }
 
+export async function allSessions(request, params = {}) {
+  const sessions = [];
+  for (let page = 1; ; page++) {
+    const response = await request.get(`${api}/statistics/`, {params: {...params, page, pageSize: 100}});
+    expect(response.ok(), `Statistics API: HTTP ${response.status()}`).toBeTruthy();
+    const [rows, total] = await response.json();
+    expect(Array.isArray(rows)).toBeTruthy();
+    sessions.push(...rows);
+    if (!rows.length || sessions.length >= total) return sessions;
+  }
+}
+
 export async function actionsFor(request, student, filter = {}) {
-  const response = await request.get(`${api}/statistics/`, {
-    params: {student_id: student.student_id, pageSize: -1, ...filter},
-  });
-  expect(response.ok(), `Statistics API: HTTP ${response.status()}`).toBeTruthy();
-  const [sessions] = await response.json();
-  expect(Array.isArray(sessions)).toBeTruthy();
+  const sessions = await allSessions(request, {student_id: student.student_id, ...filter});
   return sessions.filter(session => session.url === student.url)
     .flatMap(session => {
       expect(session.email).toBe(student.email);

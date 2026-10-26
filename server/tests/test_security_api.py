@@ -93,7 +93,11 @@ async def secured_api(monkeypatch: pytest.MonkeyPatch, tmp_path):
     guard = DatabaseStorageGuard(db, StorageSettings(max_bytes=1_000_000))
     tokens = AccessTokens(SecuritySettings("signing-" + "a" * 40, "ingestion-" + "b" * 40))
     auth, user_service = AuthService(users, guard), UserService(users)
+    async def empty_records(*args):
+        if False:
+            yield {}
     stats = SimpleNamespace(
+        iter_sessions=empty_records, iter_pages=empty_records,
         get_all_sessions=AsyncMock(return_value=[[], 0]), get_pages=AsyncMock(return_value=[]),
         get_session=AsyncMock(return_value={"_id": ADMIN, **SESSION}),
         create_page=AsyncMock(return_value={"_id": ADMIN}),

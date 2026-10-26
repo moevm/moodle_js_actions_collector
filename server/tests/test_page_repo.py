@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, MagicMock
 
 import pytest
 from bson import ObjectId
@@ -41,11 +41,14 @@ async def test_create_record_saves_only_metadata(metadata: dict, legacy_html: st
 async def test_export_requests_only_metadata_from_mongodb(metadata: dict) -> None:
     record_id = ObjectId()
     client = Mock()
-    cursor = Mock()
-    cursor.to_list = AsyncMock(return_value=[{"_id": record_id, **metadata}])
+    cursor = MagicMock()
+    cursor.batch_size.return_value = cursor
+    cursor.max_time_ms.return_value = cursor
+    cursor.__aiter__.return_value = [{"_id": record_id, **metadata}]
+    cursor.close = AsyncMock()
     client.sessions.find.return_value = cursor
 
-    result = await MongoPageRepo(client).get_all_records()
+    result = [row async for row in MongoPageRepo(client).iter_records()]
 
     # An inclusion projection excludes historical HTML before it enters RAM.
     client.sessions.find.assert_called_once_with(
@@ -53,3 +56,4 @@ async def test_export_requests_only_metadata_from_mongodb(metadata: dict) -> Non
     )
     assert result == [{"_id": str(record_id), **metadata}]
     assert "page_html" not in result[0]
+    cursor.close.assert_awaited_once()

@@ -4,9 +4,10 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 
-class SessionFilter(BaseModel):
-    page: int = Field(default=1, ge=1)
-    pageSize: int = Field(default=10, ge=-1)
+MAX_PAGE_SIZE = 100
+
+
+class StatisticsFilter(BaseModel):
     begin_timestamp: Optional[datetime] = Field(default=None, description="start date")
     end_timestamp: Optional[datetime] = Field(default=None, description="stop date")
     student_id: Optional[int] = Field(default=None, description="student moodle id")
@@ -26,20 +27,9 @@ class SessionFilter(BaseModel):
             return value.astimezone(timezone.utc).replace(tzinfo=None)
         return value
 
-    @field_validator("pageSize")
-    @classmethod
-    def valid_page_size(cls, value):
-        if value == 0:
-            raise ValueError("pageSize must be positive or -1")
-        return value
-
-    def query(self):
+    def mongo_query(self) -> dict:
         filter_dict = {}
         action_filter = {}
-        pages = {
-            'page': self.page,
-            'pageSize': self.pageSize
-        }
         if self.begin_timestamp or self.end_timestamp:
             timestamp_filter = {}
             if self.begin_timestamp:
@@ -70,4 +60,12 @@ class SessionFilter(BaseModel):
         if self.course_title:
             filter_dict['course'] = {'$regex': self.course_title, '$options': 'i'}
 
-        return filter_dict, pages
+        return filter_dict
+
+
+class SessionFilter(StatisticsFilter):
+    page: int = Field(default=1, ge=1)
+    pageSize: int = Field(default=10, ge=1, le=MAX_PAGE_SIZE)
+
+    def query(self) -> tuple[dict, dict[str, int]]:
+        return self.mongo_query(), {"page": self.page, "pageSize": self.pageSize}

@@ -1,11 +1,14 @@
 import logging
+from collections.abc import AsyncGenerator
+from contextlib import aclosing
+from typing import Any
 from datetime import datetime, timezone
 
 from bson import ObjectId
 from src.core.modules.database.errors import RepoNotFoundError
 from src.core.modules.service.errors import SessionNotFoundError
 
-from src.models.filter import SessionFilter
+from src.models.filter import SessionFilter, StatisticsFilter
 
 
 class StatisticsService:
@@ -60,9 +63,12 @@ class StatisticsService:
             logging.error(f'error creating page {page_data}: {str(e)}')
             raise Exception(f'error creating page {page_data}: {str(e)}') from e
 
-    async def get_pages(self):
-        try:
-            return await self.pages.get_all_records()
-        except Exception as e:
-            logging.error(f"error getting all pages: {str(e)}")
-            raise
+    async def iter_sessions(self, filters: StatisticsFilter) -> AsyncGenerator[dict[str, Any], None]:
+        async with aclosing(self.repo.iter_sessions(filters)) as records:
+            async for record in records:
+                yield record
+
+    async def iter_pages(self) -> AsyncGenerator[dict[str, Any], None]:
+        async with aclosing(self.pages.iter_records()) as records:
+            async for record in records:
+                yield record

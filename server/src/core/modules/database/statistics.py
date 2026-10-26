@@ -1,8 +1,15 @@
-from copy import deepcopy
+from collections.abc import AsyncGenerator
+from typing import Any
+
+from starlette.concurrency import run_in_threadpool
 
 from bson.objectid import ObjectId
 from src.core.modules.database.errors import RepoNotFoundError
-from src.models.filter import SessionFilter
+from src.models.filter import SessionFilter, StatisticsFilter
+
+
+READ_MAX_TIME_MS = 10_000
+EXPORT_BATCH_SIZE = 20
 
 
 PAGE_METADATA_FIELDS = ("page", "browser", "title", "window")
@@ -16,15 +23,32 @@ class MongoStatisticRepo:
     async def get_all_sessions(self, filters: SessionFilter) -> list:
         stats = []
         query, pages = filters.query()
-        start = 0 if pages['pageSize'] == -1 else (pages['page']-1)*pages['pageSize']
-        total_rows = await self.client.statistics.count_documents(query)
-        pageSize = total_rows if pages['pageSize'] == -1 else pages['pageSize']
-        for session in await self.client.statistics.find(query).sort({"_id": -1}).skip(start).limit(pageSize).to_list(length=None):
+        start = (pages['page'] - 1) * pages['pageSize']
+        total_rows = await self.client.statistics.count_documents(query, maxTimeMS=READ_MAX_TIME_MS)
+        cursor = (self.client.statistics.find(query).sort({"_id": -1})
+                  .skip(start).limit(pages['pageSize']).max_time_ms(READ_MAX_TIME_MS))
+        try:
+            records = await cursor.to_list(length=pages['pageSize'])
+        finally:
+            await cursor.close()
+        for session in records:
             session["_id"] = str(session["_id"])
             session["session_id"] = str(session["session_id"])
             session['actions'] = filter_actions(filters, session['actions'])
             stats.append(session)
         return [stats, total_rows]
+
+    async def iter_sessions(self, filters: StatisticsFilter) -> AsyncGenerator[dict[str, Any], None]:
+        cursor = (self.client.statistics.find(filters.mongo_query()).sort({"_id": -1})
+                  .batch_size(EXPORT_BATCH_SIZE).max_time_ms(READ_MAX_TIME_MS))
+        try:
+            async for session in cursor:
+                session["_id"] = str(session["_id"])
+                session["session_id"] = str(session["session_id"])
+                session['actions'] = await run_in_threadpool(filter_actions, filters, session['actions'])
+                yield session
+        finally:
+            await cursor.close()
 
     async def get_session(self, record_id: str) -> dict:
         stat = await self.client.statistics.find_one({"_id": ObjectId(record_id)})
@@ -48,10 +72,11 @@ class MongoStatisticRepo:
         raise RepoNotFoundError(f'record {record_id} not found')
 
 
-def filter_actions(query: SessionFilter, payload: list) -> list:
-    if not query:
+def filter_actions(query: StatisticsFilter, payload: list) -> list:
+    if not query or not any((query.action_type, query.event_type, query.element_type,
+                             query.element_name, query.begin_timestamp, query.end_timestamp)):
         return payload
-    data = deepcopy(payload)
+    data = payload
     if query.action_type:
         data = filter(lambda item: query.action_type.lower() in str(item['action_type']).lower(), data)
     if query.event_type:
@@ -81,10 +106,13 @@ class MongoPageRepo:
         new_page["_id"] = str(new_page["_id"])
         return new_page
 
-    async def get_all_records(self) -> list:
-        pages = []
+    async def iter_records(self) -> AsyncGenerator[dict[str, Any], None]:
         # Project in MongoDB so historical HTML is neither loaded nor exported.
-        for page in await self.client.sessions.find({}, PAGE_METADATA_PROJECTION).to_list(length=None):
-            page["_id"] = str(page["_id"])
-            pages.append(page)
-        return pages
+        cursor = (self.client.sessions.find({}, PAGE_METADATA_PROJECTION)
+                  .batch_size(EXPORT_BATCH_SIZE).max_time_ms(READ_MAX_TIME_MS))
+        try:
+            async for page in cursor:
+                page["_id"] = str(page["_id"])
+                yield page
+        finally:
+            await cursor.close()
