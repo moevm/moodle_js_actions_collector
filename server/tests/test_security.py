@@ -3,7 +3,7 @@ import hashlib
 import pytest
 from itsdangerous import TimestampSigner
 
-from src.core.passwords import hash_password, verify_password
+from src.core.passwords import hash_password, verify_password, verify_login_password
 from src.core.security import AccessTokens, SecuritySettings
 
 
@@ -72,3 +72,22 @@ def test_password_hashes_are_salted_and_legacy_accounts_remain_verifiable() -> N
 @pytest.mark.parametrize("value", ["pbkdf2_sha256$bad", "pbkdf2_sha256$999999999$00$00", "pbkdf2_sha256$1$00$00"])
 def test_malformed_password_hashes_do_not_fall_back_to_plaintext(value: str) -> None:
     assert not verify_password(value, value)
+
+
+@pytest.mark.parametrize(("stored", "accepted"), [
+    (None, False), ("legacy-password", True), ("different-password", False),
+    ("pbkdf2_sha256$bad", False), ("pbkdf2_sha256$1$00$00", False),
+])
+def test_login_checks_pad_unknown_legacy_and_malformed_accounts(monkeypatch, stored, accepted):
+    from src.core import passwords
+
+    original = passwords.hashlib.pbkdf2_hmac
+    iterations = []
+
+    def calculate(*args, **kwargs):
+        iterations.append(args[3])
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(passwords.hashlib, "pbkdf2_hmac", calculate)
+    assert verify_login_password("legacy-password", stored) is accepted
+    assert iterations == [600000]

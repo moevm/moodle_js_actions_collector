@@ -9,6 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from src.core.modules.database.user import MongoUserRepo
 from src.core.modules.service.authorization import AuthService
+from src.core.modules.service.errors import UserNotFoundError
 from src.core.passwords import hash_password, is_hashed_password
 from src.core.security import AccessTokens, SecuritySettings
 from src.core.storage import DatabaseStorageGuard, StorageSettings
@@ -36,6 +37,9 @@ async def test_real_mongo_legacy_login_hash_upgrade_and_token_revocation() -> No
         assert user is not None
         saved = await repo.get_user(user["_id"])
         assert is_hashed_password(saved["password"])
+        assert await auth.sign_in("probe@example.com", "wrong-password") is None
+        with pytest.raises(UserNotFoundError):
+            await auth.sign_in("missing@example.com", "wrong-password")
         claims = tokens.decode(tokens.issue(user))
         assert tokens.matches_user(claims, saved)
         await repo.update_user(user["_id"], {"password": hash_password("changed-password")})

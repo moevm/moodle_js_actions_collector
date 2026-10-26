@@ -411,6 +411,8 @@ paths:
                 $ref: '#/components/schemas/AuthSession'
         '401':
           description: Invalid credentials
+        '429':
+          description: Login rate or concurrency limit; see Retry-After
         '503':
           description: Authentication unavailable
         '422':

@@ -12,6 +12,7 @@ from src.core.modules.service.authorization import AuthService
 from src.core.modules.service.user import UserService
 from src.core.passwords import is_hashed_password, verify_password
 from src.core.security import AccessTokens, SecuritySettings
+from src.core.login_limits import LoginLimiter
 from src.core.storage import DatabaseStorageGuard, StorageSettings
 
 
@@ -87,9 +88,10 @@ async def secured_api(monkeypatch: pytest.MonkeyPatch, tmp_path):
     monkeypatch.setenv("MONGODB_DATABASE", "security-isolated-tests")
     import main
     from src.api.endpoints import statistics, user, healthcheck
-    from src.depends import get_access_tokens, get_auth_service, get_user_service, get_storage_guard
+    from src.depends import get_access_tokens, get_auth_service, get_user_service, get_storage_guard, get_login_limiter
 
     users, db = Users(), Database()
+    limiter = LoginLimiter()
     guard = DatabaseStorageGuard(db, StorageSettings(max_bytes=1_000_000))
     tokens = AccessTokens(SecuritySettings("signing-" + "a" * 40, "ingestion-" + "b" * 40))
     auth, user_service = AuthService(users, guard), UserService(users)
@@ -107,6 +109,7 @@ async def secured_api(monkeypatch: pytest.MonkeyPatch, tmp_path):
     previous = dict(main.app.dependency_overrides)
     main.app.dependency_overrides.update({
         get_access_tokens: lambda: tokens, get_auth_service: lambda: auth,
+        get_login_limiter: lambda: limiter,
         get_user_service: lambda: user_service, get_storage_guard: lambda: guard,
     })
     monkeypatch.setattr(main, "get_storage_guard", lambda: guard)
@@ -117,7 +120,7 @@ async def secured_api(monkeypatch: pytest.MonkeyPatch, tmp_path):
     try:
         async with main.app.router.lifespan_context(main.app):
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=main.app), base_url="http://test") as client:
-                yield SimpleNamespace(client=client, users=users, tokens=tokens, stats=stats, guard=guard, db=db)
+                yield SimpleNamespace(client=client, users=users, tokens=tokens, stats=stats, guard=guard, db=db, limiter=limiter, auth=auth)
     finally:
         main.app.dependency_overrides.clear()
         main.app.dependency_overrides.update(previous)

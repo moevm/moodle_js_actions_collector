@@ -53,4 +53,7 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=8080,
+        # Use the socket peer for rate limits; arbitrary X-Forwarded-For values
+        # must not change the source identity, including on direct API access.
+        proxy_headers=False,
     )

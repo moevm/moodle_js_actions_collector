@@ -16,6 +16,7 @@ from src.core.modules.service.statistics import StatisticsService
 from src.core.modules.service.user import UserService
 from src.core.storage import DatabaseStorageGuard, StorageSettings
 from src.core.security import AccessTokens, SecuritySettings
+from src.core.login_limits import LoginLimiter
 from src.core.modules.service.errors import UserNotFoundError
 from src.models.user import Role, User
 
@@ -33,6 +34,7 @@ client = aio_motor.AsyncIOMotorClient(uri, serverSelectionTimeoutMS=5000, tz_awa
 db = client[dbname]
 storage_guard = DatabaseStorageGuard(db, StorageSettings.from_env())
 access_tokens = AccessTokens(SecuritySettings.from_env())
+login_limiter = LoginLimiter()
 user_bearer = HTTPBearer(auto_error=False, scheme_name="UserAccessToken")
 ingestion_bearer = HTTPBearer(auto_error=False, scheme_name="CollectionKey")
 STORAGE_WRITE_RESPONSES = {
@@ -54,6 +56,10 @@ def get_statistics_service() -> StatisticsService:
 
 def get_auth_service() -> AuthService:
     return auth_service
+
+
+def get_login_limiter() -> LoginLimiter:
+    return login_limiter
 
 
 def get_storage_guard() -> DatabaseStorageGuard:

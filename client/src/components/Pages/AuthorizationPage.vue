@@ -81,6 +81,13 @@ export default {
         this.password = '';
         this.$router.push('/e.moevm.statistics/statistics');
       } catch (error) {
+        if (error.response?.status === 429) {
+          const retryAfter = Number(error.response.headers?.['retry-after']);
+          alert(Number.isFinite(retryAfter) && retryAfter > 0
+            ? `Слишком много попыток входа. Повторите через ${retryAfter} с.`
+            : 'Слишком много попыток входа. Подождите и повторите.');
+          return;
+        }
         const errorCode = error.message;
         const errorDetail = error.response?.data?.detail || error.response?.data?.message || 'Не удалось выполнить вход';
         const errorAlert = `${errorCode}. ${errorDetail}`
