@@ -251,15 +251,16 @@ async def test_statistics_cursor_closes_on_early_stop_without_materializing_all_
     ]
     cursor.close = AsyncMock()
     database = Mock()
-    database.statistics.find.return_value = cursor
+    database.statistics.aggregate.return_value = cursor
     records = MongoStatisticRepo(database).iter_sessions(StatisticsFilter(student_id=42))
     first = await anext(records)
     assert isinstance(first["_id"], str)
     await records.aclose()
     cursor.close.assert_awaited_once()
     cursor.to_list.assert_not_called()
-    cursor.batch_size.assert_called_once_with(20)
-    cursor.max_time_ms.assert_called_once_with(10_000)
+    options = database.statistics.aggregate.call_args.kwargs
+    assert options["batchSize"] == 20
+    assert options["maxTimeMS"] == 10_000
 
 
 @pytest.mark.asyncio

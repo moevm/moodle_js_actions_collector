@@ -11,12 +11,12 @@ async def test_get_all_sessions():
     mock_client = Mock()
     mock_client.statistics = Mock()
     mock_client.statistics.count_documents = AsyncMock(return_value=100)
-    cursor = mock_client.statistics.find.return_value
+    cursor = mock_client.statistics.aggregate.return_value
     for method in ("sort", "skip", "limit", "max_time_ms"):
         getattr(cursor, method).return_value = cursor
     cursor.to_list = AsyncMock(return_value=find_to_list())
     cursor.close = AsyncMock()
-    mock_filter = create_mock_filter()
+    mock_filter = SessionFilter(pageSize=5)
 
     repository = MongoStatisticRepo(mock_client)
 
@@ -127,27 +127,6 @@ async def test_delete_session_fail():
     except Exception as e:
         # Assert
         assert isinstance(e, RepoNotFoundError)
-
-
-def create_mock_filter():
-    mock_filter = Mock()
-    mock_filter.page = 1
-    mock_filter.pageSize = 5
-    mock_filter.end_timestamp = None
-    mock_filter.begin_timestamp = None
-    mock_filter.student_id = None
-    mock_filter.student_name = None
-    mock_filter.student_email = None
-    mock_filter.course_title = None
-    mock_filter.action_type = None
-    mock_filter.event_type = None
-    mock_filter.element_type = None
-    mock_filter.element_name = None
-    mock_filter.query.return_value = (
-        {},
-        {"page": mock_filter.page, "pageSize": mock_filter.pageSize},
-    )
-    return mock_filter
 
 
 def find_to_list():

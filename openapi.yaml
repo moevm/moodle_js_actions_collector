@@ -45,6 +45,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Student Name
       - name: student_email
@@ -53,6 +55,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Student Email
       - name: course_title
@@ -61,6 +65,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Course Title
       - name: action_type
@@ -69,6 +75,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Action Type
       - name: event_type
@@ -77,6 +85,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Event Type
       - name: element_type
@@ -85,6 +95,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Element Type
       - name: element_name
@@ -93,6 +105,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Element Name
       - name: page
@@ -476,6 +490,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Student Name
       - name: student_email
@@ -484,6 +500,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Student Email
       - name: course_title
@@ -492,6 +510,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Course Title
       - name: action_type
@@ -500,6 +520,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Action Type
       - name: event_type
@@ -508,6 +530,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Event Type
       - name: element_type
@@ -516,6 +540,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Element Type
       - name: element_name
@@ -524,6 +550,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Element Name
       responses:
