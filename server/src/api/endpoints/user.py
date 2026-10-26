@@ -1,12 +1,12 @@
 from typing import List
 
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Depends
 from fastapi.encoders import jsonable_encoder
 from starlette import status
 from starlette.responses import JSONResponse
 
 from src.core.modules.service.errors import UserNotFoundError, UserAlreadyExistsError, UserEmptyDataError
-from src.depends import get_user_service
+from src.depends import get_user_service, require_storage_capacity, STORAGE_WRITE_RESPONSES
 from src.models.user import User, UpdateUser, CreateUser
 
 router = APIRouter()
@@ -49,6 +49,8 @@ async def get_user(user_id: str):
     "/",
     status_code=status.HTTP_201_CREATED,
     response_description="Add new user",
+    dependencies=[Depends(require_storage_capacity)],
+    responses=STORAGE_WRITE_RESPONSES,
     response_model=User,
     response_model_by_alias=False,
 )
@@ -67,6 +69,8 @@ async def create_user(user_data: CreateUser = Body()):
     "/{user_id}",
     status_code=status.HTTP_200_OK,
     response_description="Update user",
+    dependencies=[Depends(require_storage_capacity)],
+    responses=STORAGE_WRITE_RESPONSES,
     response_model_by_alias=False,
     response_model=User
 )

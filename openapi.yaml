@@ -149,6 +149,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '503':
+          description: Storage monitoring is unavailable or stale; new writes are
+            paused
+        '507':
+          description: The database storage budget is exhausted; new writes are paused
   /api/statistics/{session_id}:
     get:
       tags:
@@ -225,6 +230,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '503':
+          description: Storage monitoring is unavailable or stale; new writes are
+            paused
+        '507':
+          description: The database storage budget is exhausted; new writes are paused
   /api/user/:
     get:
       tags:
@@ -267,6 +277,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '503':
+          description: Storage monitoring is unavailable or stale; new writes are
+            paused
+        '507':
+          description: The database storage budget is exhausted; new writes are paused
   /api/user/{user_id}:
     get:
       tags:
@@ -326,6 +341,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '503':
+          description: Storage monitoring is unavailable or stale; new writes are
+            paused
+        '507':
+          description: The database storage budget is exhausted; new writes are paused
     delete:
       tags:
       - api
@@ -518,6 +538,20 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/healthcheck/storage:
+    get:
+      tags:
+      - api
+      - healthcheck
+      summary: Storage Status
+      operationId: storage_status_api_healthcheck_storage_get
+      responses:
+        '200':
+          description: Cached MongoDB storage budget status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageSnapshot'
 components:
   schemas:
     CreatePageData:
@@ -977,3 +1011,45 @@ components:
       - width
       - height
       title: Window
+    StorageSnapshot:
+      properties:
+        limit_bytes:
+          type: integer
+          title: Limit Bytes
+        allocated_bytes:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Allocated Bytes
+        estimated_bytes:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Estimated Bytes
+        accepting_writes:
+          type: boolean
+          title: Accepting Writes
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        checked_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Checked At
+        check_interval_seconds:
+          type: number
+          title: Check Interval Seconds
+      type: object
+      required:
+      - limit_bytes
+      - allocated_bytes
+      - estimated_bytes
+      - accepting_writes
+      - reason
+      - checked_at
+      - check_interval_seconds
+      title: StorageSnapshot

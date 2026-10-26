@@ -9,7 +9,7 @@ from starlette import status
 from starlette.responses import JSONResponse, FileResponse
 
 from src.core.modules.service.errors import SessionNotFoundError
-from src.depends import get_statistics_service
+from src.depends import get_statistics_service, require_storage_capacity, STORAGE_WRITE_RESPONSES
 from src.models.filter import SessionFilter
 from src.models.session_data import SessionData, CreateSessionData
 from src.models.session_data import CreatePageData
@@ -54,6 +54,8 @@ async def get_session_by_id(session_id: str):
     "/",
     status_code=status.HTTP_201_CREATED,
     response_description="Add new session",
+    dependencies=[Depends(require_storage_capacity)],
+    responses=STORAGE_WRITE_RESPONSES,
     response_model=SessionData,
     response_model_by_alias=False
 )
@@ -108,6 +110,8 @@ async def download_data(params: SessionFilter = Depends()):
     "/page",
     status_code=status.HTTP_201_CREATED,
     response_description="Register page metadata without HTML",
+    dependencies=[Depends(require_storage_capacity)],
+    responses=STORAGE_WRITE_RESPONSES,
     response_model=str,
     response_model_by_alias=False
 )
