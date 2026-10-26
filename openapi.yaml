@@ -304,9 +304,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '409':
+          description: Email is already in use, or the protected administrator cannot be removed/demoted
         '503':
-          description: Storage monitoring is unavailable or stale; new writes are
-            paused
+          description: User management or storage monitoring is unavailable
         '507':
           description: The database storage budget is exhausted; new writes are paused
       security:
@@ -345,6 +346,14 @@ paths:
       - api
       - user
       summary: Update User
+      description: >-
+        On the first deletion or demotion, the existing administrator with the lowest
+        MongoDB _id is permanently protected in collector_settings/protected-administrator.
+        This account cannot be deleted or demoted even when other admins exist;
+        its name, email and password can be changed. Other administrators can be
+        deleted or demoted. The reference survives restarts. If manually removed
+        from MongoDB, restore the protected account and its admin role from backup;
+        do not delete the guard reference to bypass protection.
       operationId: update_user_api_user__user_id__put
       parameters:
       - name: user_id
@@ -372,9 +381,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '409':
+          description: Email is already in use, or the protected administrator cannot be removed/demoted
         '503':
-          description: Storage monitoring is unavailable or stale; new writes are
-            paused
+          description: User management or storage monitoring is unavailable
         '507':
           description: The database storage budget is exhausted; new writes are paused
       security:
@@ -384,6 +394,9 @@ paths:
       - api
       - user
       summary: Delete User
+      description: >-
+        The permanently protected administrator cannot be deleted. Other administrators
+        and regular accounts can be removed. See Update User for protection and recovery.
       operationId: delete_user_api_user__user_id__delete
       parameters:
       - name: user_id
@@ -395,6 +408,10 @@ paths:
       responses:
         '204':
           description: Delete a user
+        '409':
+          description: The protected administrator cannot be deleted
+        '503':
+          description: User management is unavailable
         '422':
           description: Validation Error
           content:

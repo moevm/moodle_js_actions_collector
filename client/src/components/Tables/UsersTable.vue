@@ -57,7 +57,11 @@ export default {
             })
             .catch((error) => {
             if (error.response?.status === 401) return;
-              alert("Ошибка при удалении пользователя");
+              if (error.response?.data?.detail?.code === 'protected_administrator') {
+                alert('Защищённого администратора нельзя удалить.');
+              } else {
+                alert("Ошибка при удалении пользователя");
+              }
               console.error("Ошибка при удалении пользователя:", error.response?.status || error.message);
             });
       }

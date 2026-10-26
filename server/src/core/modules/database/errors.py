@@ -8,3 +8,11 @@ class RepoAlreadyExistsError(Exception):
 
 class RepoEmptyDataError(Exception):
     pass
+
+
+class RepoProtectedAdminError(Exception):
+    pass
+
+
+class RepoUserManagementUnavailableError(Exception):
+    pass
