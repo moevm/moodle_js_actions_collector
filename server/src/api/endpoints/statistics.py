@@ -1,12 +1,15 @@
+import logging
 from typing import List
 
 from fastapi import APIRouter, HTTPException, Body, Depends
 from fastapi.encoders import jsonable_encoder
+from pymongo.errors import PyMongoError
 from starlette import status
 
 from starlette.responses import Response
 
 from src.api.exports import json_export
+from src.api.validation import query_model
 
 from src.core.modules.service.errors import SessionNotFoundError
 from src.depends import (
@@ -14,6 +17,7 @@ from src.depends import (
     require_current_user, require_admin, require_ingestion_key,
 )
 from src.models.filter import SessionFilter, StatisticsFilter
+from src.models.constraints import MongoObjectId
 from src.models.session_data import SessionData, CreateSessionData
 from src.models.session_data import CreatePageData
 
@@ -22,37 +26,46 @@ download_router = APIRouter(dependencies=[Depends(require_current_user)])
 service = get_statistics_service()
 
 
+def statistics_error(error: Exception) -> HTTPException:
+    if isinstance(error, SessionNotFoundError):
+        return HTTPException(404, "Session not found", headers={"Cache-Control": "no-store"})
+    logging.error("Statistics operation failed: %s", type(error).__name__)
+    if isinstance(error, PyMongoError):
+        return HTTPException(503, "Statistics database is unavailable", headers={"Cache-Control": "no-store"})
+    return HTTPException(500, "Statistics operation failed", headers={"Cache-Control": "no-store"})
+
+
 @router.get(
     "/",
     status_code=status.HTTP_200_OK,
     response_description="Get statistics",
+    responses={503: {"description": "Statistics database is unavailable"}},
     dependencies=[Depends(require_current_user)],
     response_model=List,
     response_model_by_alias=False
 )
-async def get_all_sessions(params: SessionFilter = Depends()):
+async def get_all_sessions(params: SessionFilter = Depends(query_model(SessionFilter))):
     try:
         return await service.get_all_sessions(params)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    except Exception as error:
+        raise statistics_error(error) from error
 
 
 @router.get(
     "/{session_id}",
     status_code=status.HTTP_200_OK,
     response_description="Get session statistic",
+    responses={404: {"description": "A valid ID has no matching statistics record"},
+               503: {"description": "Statistics database is unavailable"}},
     dependencies=[Depends(require_current_user)],
     response_model=SessionData,
     response_model_by_alias=False
 )
-async def get_session_by_id(session_id: str):
+async def get_session_by_id(session_id: MongoObjectId):
     try:
         return await service.get_session(session_id)
-    except Exception as e:
-        if isinstance(e, SessionNotFoundError):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
-        else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    except Exception as error:
+        raise statistics_error(error) from error
 
 
 @router.post(
@@ -60,7 +73,8 @@ async def get_session_by_id(session_id: str):
     status_code=status.HTTP_201_CREATED,
     response_description="Add new session",
     dependencies=[Depends(require_ingestion_key), Depends(require_storage_capacity)],
-    responses=STORAGE_WRITE_RESPONSES,
+    responses={**STORAGE_WRITE_RESPONSES,
+               503: {"description": "Storage monitoring or statistics database is unavailable"}},
     response_model=SessionData,
     response_model_by_alias=False
 )
@@ -68,29 +82,25 @@ async def create_session(session: CreateSessionData = Body()):
     try:
         session = jsonable_encoder(session)
         return await service.create_session(session)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as error:
+        raise statistics_error(error) from error
 
 
 @router.delete(
     "/{session_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     response_description="Delete a session statistic",
+    responses={404: {"description": "A valid ID has no matching statistics record"},
+               503: {"description": "Statistics database is unavailable"}},
     dependencies=[Depends(require_admin)],
 )
-async def delete_session(session_id: str):
+async def delete_session(session_id: MongoObjectId):
     try:
         res = await service.delete_session(session_id)
         if res.deleted_count == 1:
             return Response(status_code=status.HTTP_204_NO_CONTENT)
-    except Exception as e:
-        if isinstance(e, SessionNotFoundError):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Deleting session {session_id} failed: {str(e)}"
-            )
-        else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    except Exception as error:
+        raise statistics_error(error) from error
 
 
 @download_router.get(
@@ -98,7 +108,7 @@ async def delete_session(session_id: str):
     response_description="Stream all statistics matching the filters, without table pagination",
     responses={429: {"description": "Another export is running"}, 503: {"description": "Export unavailable"}}
 )
-async def download_data(params: StatisticsFilter = Depends()):
+async def download_data(params: StatisticsFilter = Depends(query_model(StatisticsFilter))):
     return await json_export(service.iter_sessions(params), filename="data.json", with_total=True)
 
 
@@ -107,7 +117,8 @@ async def download_data(params: StatisticsFilter = Depends()):
     status_code=status.HTTP_201_CREATED,
     response_description="Register page metadata without HTML",
     dependencies=[Depends(require_ingestion_key), Depends(require_storage_capacity)],
-    responses=STORAGE_WRITE_RESPONSES,
+    responses={**STORAGE_WRITE_RESPONSES,
+               503: {"description": "Storage monitoring or statistics database is unavailable"}},
     response_model=str,
     response_model_by_alias=False
 )
@@ -116,8 +127,8 @@ async def create_page(page: CreatePageData = Body()):
         page = jsonable_encoder(page)
         created_page = await service.create_page(page)
         return created_page['_id']
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as error:
+        raise statistics_error(error) from error
 
 
 @download_router.get(

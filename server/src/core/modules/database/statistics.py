@@ -69,10 +69,10 @@ class MongoStatisticRepo:
         return new_stat
 
     async def delete_session(self, record_id: str):
-        stat = await self.client.statistics.find_one({"_id": ObjectId(record_id)})
-        if stat:
-            return await self.client.statistics.delete_one({"_id": ObjectId(record_id)})
-        raise RepoNotFoundError(f'record {record_id} not found')
+        result = await self.client.statistics.delete_one({"_id": ObjectId(record_id)})
+        if result.deleted_count != 1:
+            raise RepoNotFoundError(f'record {record_id} not found')
+        return result
 
 
 class MongoPageRepo:

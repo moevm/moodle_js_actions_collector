@@ -13,6 +13,7 @@ from src.core.modules.service.errors import (
 )
 from src.depends import get_user_service, require_storage_capacity, STORAGE_WRITE_RESPONSES, require_admin
 from src.models.user import User, UpdateUser, CreateUser
+from src.models.constraints import MongoObjectId
 
 router = APIRouter(dependencies=[Depends(require_admin)])
 
@@ -70,10 +71,11 @@ async def get_all_users():
     "/{user_id}",
     status_code=status.HTTP_200_OK,
     response_description="Retrieve a user",
+    responses={404: {"description": "A valid ID has no matching user"}},
     response_model=User,
     response_model_by_alias=False,
 )
-async def get_user(user_id: str):
+async def get_user(user_id: MongoObjectId):
     try:
         return await service.get_user(user_id)
     except Exception as error:
@@ -103,11 +105,12 @@ async def create_user(user_data: CreateUser = Body()):
     response_description="Update user",
     description=ADMIN_PROTECTION_DESCRIPTION,
     dependencies=[Depends(require_storage_capacity)],
-    responses={**STORAGE_WRITE_RESPONSES, **MANAGEMENT_RESPONSES},
+    responses={**STORAGE_WRITE_RESPONSES, **MANAGEMENT_RESPONSES,
+               404: {"description": "A valid ID has no matching user"}},
     response_model_by_alias=False,
     response_model=User
 )
-async def update_user(user_id: str, user_data: UpdateUser = Body()):
+async def update_user(user_id: MongoObjectId, user_data: UpdateUser = Body()):
     try:
         return await service.update_user(user_id, user_data)
     except Exception as error:
@@ -119,9 +122,9 @@ async def update_user(user_id: str, user_data: UpdateUser = Body()):
     status_code=status.HTTP_204_NO_CONTENT,
     response_description="Delete a user",
     description=ADMIN_PROTECTION_DESCRIPTION,
-    responses=MANAGEMENT_RESPONSES,
+    responses={**MANAGEMENT_RESPONSES, 404: {"description": "A valid ID has no matching user"}},
 )
-async def delete_user(user_id: str):
+async def delete_user(user_id: MongoObjectId):
     try:
         res = await service.delete_user(user_id)
         if res.deleted_count == 1:

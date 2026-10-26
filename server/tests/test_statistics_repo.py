@@ -1,5 +1,6 @@
 from unittest.mock import Mock, AsyncMock
 import pytest
+from bson import ObjectId
 from src.core.modules.database.statistics import MongoStatisticRepo
 from src.models.filter import SessionFilter
 from src.core.modules.database.errors import RepoNotFoundError
@@ -85,8 +86,7 @@ async def test_delete_session_success():
     # Arrange
     mock_client = Mock()
     record_id = '60d5ec49f1a4a21f6c8b4567'
-    mock_client.statistics.find_one.return_value = find_one()
-    mock_client.statistics.delete_one.return_value = delete_one()
+    mock_client.statistics.delete_one = AsyncMock(return_value=Mock(deleted_count=1))
 
     repository = MongoStatisticRepo(mock_client)
 
@@ -95,6 +95,8 @@ async def test_delete_session_success():
 
     # Assert
     assert result.deleted_count == 1
+    mock_client.statistics.find_one.assert_not_called()
+    mock_client.statistics.delete_one.assert_awaited_once_with({"_id": ObjectId(record_id)})
 
 
 @pytest.mark.asyncio
@@ -118,15 +120,11 @@ async def test_delete_session_fail():
     # Arrange
     mock_client = Mock()
     record_id = '60d5ec49f1a4a21f6c8b4567'
-    mock_client.statistics.find_one.side_effect = RepoNotFoundError()
+    mock_client.statistics.delete_one = AsyncMock(return_value=Mock(deleted_count=0))
 
     repository = MongoStatisticRepo(mock_client)
-    try:
-        # Act
-        result = await repository.delete_session(record_id)
-    except Exception as e:
-        # Assert
-        assert isinstance(e, RepoNotFoundError)
+    with pytest.raises(RepoNotFoundError):
+        await repository.delete_session(record_id)
 
 
 def find_to_list():

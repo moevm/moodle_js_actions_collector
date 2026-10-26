@@ -1,11 +1,15 @@
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
+
+from src.models.constraints import BSON_INT64_MAX, MoodleUserId, utc_datetime
 
 
 MAX_PAGE_SIZE = 100
+# Keep both offset and offset + limit within BSON int64 for every page size.
+MAX_PAGE = BSON_INT64_MAX // MAX_PAGE_SIZE
 MAX_SEARCH_LENGTH = 256
 TEXT_PATTERN = r"^[^\x00]*$"
 ACTION_TEXT_FIELDS = ("action_type", "event_type", "element_type", "element_name")
@@ -18,9 +22,9 @@ def literal_text(value: str) -> dict:
 
 
 class StatisticsFilter(BaseModel):
-    begin_timestamp: Optional[datetime] = Field(default=None, description="start date")
-    end_timestamp: Optional[datetime] = Field(default=None, description="stop date")
-    student_id: Optional[int] = Field(default=None, description="student moodle id")
+    begin_timestamp: Optional[datetime] = Field(default=None, description="start date, converted to UTC; must not exceed end_timestamp")
+    end_timestamp: Optional[datetime] = Field(default=None, description="stop date, converted to UTC; must not precede begin_timestamp")
+    student_id: Optional[MoodleUserId] = Field(default=None, description="student moodle id")
     student_name: Optional[str] = Field(default=None, max_length=MAX_SEARCH_LENGTH, pattern=TEXT_PATTERN, description="student FIO; case-insensitive literal substring")
     student_email: Optional[str] = Field(default=None, max_length=MAX_SEARCH_LENGTH, pattern=TEXT_PATTERN, description="student email; case-insensitive literal substring")
     course_title: Optional[str] = Field(default=None, max_length=MAX_SEARCH_LENGTH, pattern=TEXT_PATTERN, description="course; case-insensitive literal substring")
@@ -31,9 +35,15 @@ class StatisticsFilter(BaseModel):
 
     @field_validator("begin_timestamp", "end_timestamp")
     @classmethod
-    def utc_timestamp(cls, value):
-        if value is not None and value.tzinfo is not None:
-            return value.astimezone(timezone.utc).replace(tzinfo=None)
+    def utc_timestamp(cls, value: datetime | None) -> datetime | None:
+        return utc_datetime(value) if value is not None else None
+
+    @field_validator("end_timestamp")
+    @classmethod
+    def ordered_timestamps(cls, value: datetime | None, info: ValidationInfo) -> datetime | None:
+        begin = info.data.get("begin_timestamp")
+        if value is not None and begin is not None and value < begin:
+            raise ValueError("end_timestamp must be greater than or equal to begin_timestamp")
         return value
 
     def action_query(self) -> dict:
@@ -80,7 +90,7 @@ class StatisticsFilter(BaseModel):
 
 
 class SessionFilter(StatisticsFilter):
-    page: int = Field(default=1, ge=1)
+    page: int = Field(default=1, ge=1, le=MAX_PAGE)
     pageSize: int = Field(default=10, ge=1, le=MAX_PAGE_SIZE)
 
     def query(self) -> tuple[dict, dict[str, int]]:

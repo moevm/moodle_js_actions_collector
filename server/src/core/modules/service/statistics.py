@@ -20,7 +20,7 @@ class StatisticsService:
         try:
             return await self.repo.get_all_sessions(filters)
         except Exception as e:
-            logging.error(f"error getting all sessions: {str(e)}")
+            logging.error("Statistics query failed: %s", type(e).__name__)
             raise
 
     async def get_session(self, session_id):
@@ -28,7 +28,7 @@ class StatisticsService:
             return await self.repo.get_session(session_id)
         except Exception as e:
             if isinstance(e, RepoNotFoundError):
-                logging.error(f"error getting session {session_id}: {str(e)}")
+                logging.info("Statistics record not found")
                 raise SessionNotFoundError(f"error getting session {session_id}: {str(e)}") from e
             else:
                 raise
@@ -38,7 +38,7 @@ class StatisticsService:
             return await self.repo.delete_session(session_id)
         except Exception as e:
             if isinstance(e, RepoNotFoundError):
-                logging.error(f"error deleting session {session_id}: {str(e)}")
+                logging.info("Statistics record not found for deletion")
                 raise SessionNotFoundError(f"error deleting session {session_id}: {str(e)}") from e
             else:
                 raise
@@ -53,15 +53,15 @@ class StatisticsService:
                 action["timestamp"] = value
             return await self.repo.add_session(session_data)
         except Exception as e:
-            logging.error(f'error creating session data {session_data}: {str(e)}')
-            raise Exception(f'error creating session data {session_data}: {str(e)}') from e
+            logging.error("Statistics insert failed: %s", type(e).__name__)
+            raise
 
     async def create_page(self, page_data):
         try:
             return await self.pages.create_record(page_data)
         except Exception as e:
-            logging.error(f'error creating page {page_data}: {str(e)}')
-            raise Exception(f'error creating page {page_data}: {str(e)}') from e
+            logging.error("Page metadata insert failed: %s", type(e).__name__)
+            raise
 
     async def iter_sessions(self, filters: StatisticsFilter) -> AsyncGenerator[dict[str, Any], None]:
         async with aclosing(self.repo.iter_sessions(filters)) as records:
