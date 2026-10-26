@@ -19,7 +19,7 @@
           :rules="passwordRules"
           id="password-input">
       </DataInput>
-      <p class="problems">В случае проблем пишите на admin@mail.ru</p>
+      <p class="problems">Учётная запись коллектора. Пароль Moodle здесь не используется.</p>
       <DataButton id="sign-in-button" title='вход'></DataButton>
     </DataForm>
   </AuthForm>
@@ -31,7 +31,8 @@ import DataForm from "@/components/Data/DataForm.vue";
 import DataButton from "@/components/Data/DataButton.vue";
 import AuthForm from "@/components/AuthForm.vue";
 
-import axios from 'axios';
+import axios from '@/api.mjs';
+import {clearSession, saveSession} from '@/auth-state.mjs';
 
 const SIGN_IN_URL = '/api/auth/sign-in'
 
@@ -64,7 +65,7 @@ export default {
   },
 
   beforeMount() {
-    window.sessionStorage.clear();
+    clearSession();
   },
 
   methods: {
@@ -76,17 +77,15 @@ export default {
 
       try {
         const response = await axios.post(SIGN_IN_URL, userData);
-        console.log('Вход в систему выполнен успешно!', response.data);
-        const userName = `${response.data.name} ${response.data.surname}`;
-        sessionStorage.setItem("name", userName);
-        sessionStorage.setItem("position", response.data.position);
+        saveSession(response.data);
+        this.password = '';
         this.$router.push('/e.moevm.statistics/statistics');
       } catch (error) {
         const errorCode = error.message;
-        const errorDetail = error.response.data.detail || error.response.data.message;
+        const errorDetail = error.response?.data?.detail || error.response?.data?.message || 'Не удалось выполнить вход';
         const errorAlert = `${errorCode}. ${errorDetail}`
         alert(errorAlert);
-        console.error('Ошибка при входе в систему.', error);
+        console.error('Ошибка при входе в систему.', error.response?.status || error.message);
       }
     }
   }

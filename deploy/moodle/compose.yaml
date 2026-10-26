@@ -29,6 +29,7 @@ services:
       MOODLE_STUDENT_PASSWORD: ${MOODLE_STUDENT_PASSWORD:-StudentLocal123!}
       MOODLE_TEACHER_PASSWORD: ${MOODLE_TEACHER_PASSWORD:-TeacherLocal123!}
       COLLECTOR_API_URL: ${COLLECTOR_API_URL:-http://localhost:18081/api}
+      COLLECTOR_INGEST_KEY: ${COLLECTOR_INGEST_KEY:?Run python3 scripts/init-auth-secrets.py first}
     ports: ['127.0.0.1:${MOODLE_PORT:-18082}:80']
     volumes: [moodle-data:/var/www/moodledata]
     depends_on:

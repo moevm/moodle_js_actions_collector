@@ -3,13 +3,13 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Body, Depends
 from fastapi.encoders import jsonable_encoder
 from starlette import status
-from starlette.responses import JSONResponse
+from starlette.responses import Response
 
 from src.core.modules.service.errors import UserNotFoundError, UserAlreadyExistsError, UserEmptyDataError
-from src.depends import get_user_service, require_storage_capacity, STORAGE_WRITE_RESPONSES
+from src.depends import get_user_service, require_storage_capacity, STORAGE_WRITE_RESPONSES, require_admin
 from src.models.user import User, UpdateUser, CreateUser
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_admin)])
 
 service = get_user_service()
 
@@ -97,7 +97,7 @@ async def delete_user(user_id: str):
     try:
         res = await service.delete_user(user_id)
         if res.deleted_count == 1:
-            return JSONResponse(status_code=status.HTTP_204_NO_CONTENT, content={"message": "Deleted successfully"})
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:
         if isinstance(e, UserNotFoundError):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,

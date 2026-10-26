@@ -11,6 +11,7 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 \core\session\manager::set_user(get_admin());
 set_config('enabled', 1, 'local_actioncollector');
 set_config('apiurl', getenv('COLLECTOR_API_URL'), 'local_actioncollector');
+set_config('ingestkey', getenv('COLLECTOR_INGEST_KEY'), 'local_actioncollector');
 set_config('enablecompletion', 1);
 
 function lab_user($username, $firstname, $lastname, $password) {

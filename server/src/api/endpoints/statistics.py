@@ -6,16 +6,19 @@ from fastapi import APIRouter, HTTPException, Body, Depends
 from fastapi.encoders import jsonable_encoder
 from starlette import status
 
-from starlette.responses import JSONResponse, FileResponse
+from starlette.responses import Response, FileResponse
 
 from src.core.modules.service.errors import SessionNotFoundError
-from src.depends import get_statistics_service, require_storage_capacity, STORAGE_WRITE_RESPONSES
+from src.depends import (
+    get_statistics_service, require_storage_capacity, STORAGE_WRITE_RESPONSES,
+    require_current_user, require_admin, require_ingestion_key,
+)
 from src.models.filter import SessionFilter
 from src.models.session_data import SessionData, CreateSessionData
 from src.models.session_data import CreatePageData
 
 router = APIRouter()
-download_router = APIRouter()
+download_router = APIRouter(dependencies=[Depends(require_current_user)])
 service = get_statistics_service()
 
 
@@ -23,6 +26,7 @@ service = get_statistics_service()
     "/",
     status_code=status.HTTP_200_OK,
     response_description="Get statistics",
+    dependencies=[Depends(require_current_user)],
     response_model=List,
     response_model_by_alias=False
 )
@@ -37,6 +41,7 @@ async def get_all_sessions(params: SessionFilter = Depends()):
     "/{session_id}",
     status_code=status.HTTP_200_OK,
     response_description="Get session statistic",
+    dependencies=[Depends(require_current_user)],
     response_model=SessionData,
     response_model_by_alias=False
 )
@@ -54,7 +59,7 @@ async def get_session_by_id(session_id: str):
     "/",
     status_code=status.HTTP_201_CREATED,
     response_description="Add new session",
-    dependencies=[Depends(require_storage_capacity)],
+    dependencies=[Depends(require_ingestion_key), Depends(require_storage_capacity)],
     responses=STORAGE_WRITE_RESPONSES,
     response_model=SessionData,
     response_model_by_alias=False
@@ -71,12 +76,13 @@ async def create_session(session: CreateSessionData = Body()):
     "/{session_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     response_description="Delete a session statistic",
+    dependencies=[Depends(require_admin)],
 )
 async def delete_session(session_id: str):
     try:
         res = await service.delete_session(session_id)
         if res.deleted_count == 1:
-            return JSONResponse(status_code=status.HTTP_204_NO_CONTENT, content={"message": "Deleted successfully"})
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:
         if isinstance(e, SessionNotFoundError):
             raise HTTPException(
@@ -100,6 +106,7 @@ async def download_data(params: SessionFilter = Depends()):
         return FileResponse(
             os.path.join(os.path.curdir, 'data.json'),
             filename="data.json",
+            headers={"Cache-Control": "no-store"},
             media_type='application/octet-stream'
         )
     except Exception as e:
@@ -110,7 +117,7 @@ async def download_data(params: SessionFilter = Depends()):
     "/page",
     status_code=status.HTTP_201_CREATED,
     response_description="Register page metadata without HTML",
-    dependencies=[Depends(require_storage_capacity)],
+    dependencies=[Depends(require_ingestion_key), Depends(require_storage_capacity)],
     responses=STORAGE_WRITE_RESPONSES,
     response_model=str,
     response_model_by_alias=False
@@ -137,6 +144,7 @@ async def download_sessions():
         return FileResponse(
             os.path.join(os.path.curdir, 'sessions.json'),
             filename="sessions.json",
+            headers={"Cache-Control": "no-store"},
             media_type='application/octet-stream'
         )
     except Exception as e:

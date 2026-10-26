@@ -37,7 +37,7 @@ test('external targets, credentials and ambiguous ports fail before a test start
   assert.throws(() => proxyRoutes({...defaults, COLLECTOR_API_PORT: 'invalid'}));
 });
 
-test('proxy preserves real request body, Host, Origin, cookies, redirects and CORS', async () => {
+test('proxy preserves real request body, Host, Origin, cookies, Authorization, redirects and CORS', async () => {
   const payload = JSON.stringify({actions: [{event_type: 'paste'}]});
   let received;
   const upstream = http.createServer(async (request, response) => {
@@ -59,7 +59,7 @@ test('proxy preserves real request body, Host, Origin, cookies, redirects and CO
       const request = http.request({
         host: '127.0.0.1', port: proxy.address().port, path: '/api/statistics/?page=1',
         method: 'POST',
-        headers: {Host: 'localhost:18081', Origin: 'http://localhost:18082', Cookie: 'MoodleSession=example'},
+        headers: {Host: 'localhost:18081', Origin: 'http://localhost:18082', Cookie: 'MoodleSession=example', Authorization: 'Bearer proxy-test-key'},
       }, incoming => {
         const chunks = [];
         incoming.on('data', chunk => chunks.push(chunk));
@@ -74,6 +74,7 @@ test('proxy preserves real request body, Host, Origin, cookies, redirects and CO
     assert.equal(received.headers.host, 'localhost:18081');
     assert.equal(received.headers.origin, 'http://localhost:18082');
     assert.equal(received.headers.cookie, 'MoodleSession=example');
+    assert.equal(received.headers.authorization, 'Bearer proxy-test-key');
     assert.equal(response.status, 302);
     assert.equal(response.headers.location, 'http://localhost:18082/login/index.php');
     assert.equal(response.headers['access-control-allow-origin'], 'http://localhost:18082');

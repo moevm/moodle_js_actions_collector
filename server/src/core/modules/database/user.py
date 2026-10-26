@@ -51,6 +51,12 @@ class MongoUserRepo:
         updated_user["_id"] = str(updated_user["_id"])
         return updated_user
 
+    async def replace_password(self, user_id: str, expected: str, replacement: str) -> bool:
+        result = await self.client.users.update_one(
+            {"_id": ObjectId(user_id), "password": expected}, {"$set": {"password": replacement}},
+        )
+        return result.modified_count == 1
+
     async def delete_user(self, user_id: str):
         user = await self.client.users.find_one({"_id": ObjectId(user_id)})
         if user:

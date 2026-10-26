@@ -90,7 +90,7 @@
 <script>
 import Navbar from "@/components/Navbar.vue";
 import StatisticsTable from "@/components/Tables/StatisticsTable.vue";
-import axios from "axios";
+import axios from "@/api.mjs";
 import Filters from "@/components/Filters/Filters.vue";
 import Chart from "@/components/Chart.vue";
 import DateTime from "@/components/Filters/DateTime.vue";
@@ -349,8 +349,9 @@ export default {
             });
           })
           .catch((error) => {
+            if (error.response?.status === 401) return;
             alert("Ошибка при получении данных");
-            console.error("Ошибка при получении данных:", error);
+            console.error("Ошибка при получении данных:", error.response?.status || error.message);
           });
     }
   }

@@ -13,6 +13,10 @@
   const encoder = new TextEncoder();
   const state = {ready: false, queued: 0, queuedBytes: 0, sent: 0, dropped: 0, retryAt: 0, error: null};
   window.actionCollector = state;
+  if (typeof config.ingestKey !== 'string' || !config.ingestKey) {
+    state.error = 'Collection key is not configured';
+    return;
+  }
   let queue = [];
   let queueBytes = 0;
   let active = [];
@@ -31,7 +35,7 @@
     try {
       const response = await fetch(api + path, {
         method: 'POST', credentials: 'omit',
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json', Authorization: `Bearer ${config.ingestKey}`},
         body: JSON.stringify(body), keepalive, signal: controller.signal
       });
       if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);

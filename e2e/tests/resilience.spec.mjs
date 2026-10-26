@@ -1,4 +1,4 @@
-import {test, expect} from '@playwright/test';
+import {test, expect} from './fixtures.mjs';
 import {randomUUID} from 'node:crypto';
 import {api, demo, login, markedUrl} from './helpers.mjs';
 

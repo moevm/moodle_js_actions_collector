@@ -3,6 +3,7 @@ set -euo pipefail
 cd -- "$(dirname -- "$0")/.."
 command -v docker >/dev/null || { echo "Docker is not installed." >&2; exit 1; }
 [ -f .env ] || cp .env.example .env
+python3 scripts/init-auth-secrets.py
 docker compose config --quiet
 # Restart already built services; never download or build images.
 if ! docker compose up -d --no-build --pull never --wait --wait-timeout 900; then

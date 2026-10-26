@@ -3,4 +3,5 @@
 set -euo pipefail
 cd -- "$(dirname -- "$0")"
 [ -f .env ] || cp .env.example .env
+python3 scripts/init-auth-secrets.py
 docker compose -f docker-compose.prod.yaml up -d --build --wait --wait-timeout 900

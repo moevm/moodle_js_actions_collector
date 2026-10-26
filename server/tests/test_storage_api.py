@@ -69,19 +69,28 @@ async def api(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("MONGODB_DATABASE", "collector-storage-tests")
     import main
     from src.api.endpoints import statistics
-    from src.depends import get_storage_guard
+    from src.depends import get_storage_guard, require_current_user, get_access_tokens
+    from src.models.user import User
 
     db = Database()
     guard = DatabaseStorageGuard(db, StorageSettings(max_bytes=10_000_000))
     monkeypatch.setattr(main, "get_storage_guard", lambda: guard)
     main.app.dependency_overrides[get_storage_guard] = lambda: guard
+    main.app.dependency_overrides[require_current_user] = lambda: User(
+        _id="60d5ec49f1a4a21f6c8b4567", name="Test", surname="Admin", lastname="Test",
+        email="admin@example.com", position="admin",
+    )
     monkeypatch.setattr(statistics, "service", StatisticsService(MongoStatisticRepo(db), MongoPageRepo(db)))
     try:
         async with main.app.router.lifespan_context(main.app):
-            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=main.app), base_url="http://test") as client:
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=main.app), base_url="http://test",
+                headers={"Authorization": f"Bearer {get_access_tokens().settings.ingestion_key}"},
+            ) as client:
                 yield client, db, guard
     finally:
         main.app.dependency_overrides.pop(get_storage_guard, None)
+        main.app.dependency_overrides.pop(require_current_user, None)
 
 
 @pytest.mark.asyncio

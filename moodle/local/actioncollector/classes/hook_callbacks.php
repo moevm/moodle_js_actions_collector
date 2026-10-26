@@ -12,9 +12,11 @@ final class hook_callbacks {
             return;
         }
         $apiurl = get_config('local_actioncollector', 'apiurl');
-        if (!$apiurl) { return; }
+        $ingestkey = trim((string)get_config('local_actioncollector', 'ingestkey'));
+        if (!$apiurl || !$ingestkey) { return; }
         $context = [
             'apiUrl' => rtrim($apiurl, '/'),
+            'ingestKey' => $ingestkey,
             'user' => [
                 'student_id' => (int)$USER->id,
                 'student' => fullname($USER),
@@ -23,7 +25,7 @@ final class hook_callbacks {
             ],
         ];
         $json = json_encode($context, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
-        $url = new \moodle_url('/local/actioncollector/collector.js', ['v' => 2026102300]);
+        $url = new \moodle_url('/local/actioncollector/collector.js', ['v' => 2026102600]);
         $html = '<script>window.actionCollectorConfig = ' . $json . ';</script>'
             . '<script src="' . s($url->out(false)) . '" async></script>';
         $hook->add_html($html);

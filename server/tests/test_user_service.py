@@ -114,7 +114,7 @@ async def test_create_user_success():
     user_service = UserService(mock_repo)
 
     # Act
-    result = await user_service.create_user({})
+    result = await user_service.create_user({"password": "test-password"})
 
     # Assert
     assert int(result["_id"], 16)

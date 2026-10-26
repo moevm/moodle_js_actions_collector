@@ -1,4 +1,6 @@
 import logging
+from starlette.concurrency import run_in_threadpool
+from src.core.passwords import hash_password
 from src.core.modules.database.errors import RepoNotFoundError, RepoAlreadyExistsError, RepoEmptyDataError
 from src.core.modules.service.errors import UserNotFoundError, UserAlreadyExistsError, UserEmptyDataError
 from src.models.user import Role, UpdateUser
@@ -28,17 +30,21 @@ class UserService:
     async def create_user(self, user_data):
         try:
             user_data["position"] = Role.regular
+            user_data["password"] = await run_in_threadpool(hash_password, user_data["password"])
             return await self.repo.add_user(user_data)
         except Exception as e:
             if isinstance(e, RepoAlreadyExistsError):
-                logging.error(f'error creating user {user_data}: {str(e)}')
-                raise UserAlreadyExistsError(f'error creating user {user_data}: {str(e)}') from e
+                logging.error('error creating user %s: %s', user_data.get('email'), e)
+                raise UserAlreadyExistsError(f"User {user_data.get('email')} already exists") from e
             else:
                 raise
 
     async def update_user(self, user_id, user_data: UpdateUser):
         try:
-            return await self.repo.update_user(user_id, user_data.dict())
+            fields = user_data.model_dump(exclude_none=True)
+            if "password" in fields:
+                fields["password"] = await run_in_threadpool(hash_password, fields["password"])
+            return await self.repo.update_user(user_id, fields)
         except Exception as e:
             if isinstance(e, RepoEmptyDataError):
                 logging.error(f'error updating user {user_id}: {str(e)}')

@@ -31,7 +31,7 @@ import DataForm from "@/components/Data/DataForm.vue";
 import DataButton from "@/components/Data/DataButton.vue";
 import AuthForm from "@/components/AuthForm.vue";
 
-import axios from 'axios';
+import axios from '@/api.mjs';
 import Navbar from "@/components/Navbar.vue";
 
 const CREATE_URL = '/api/user/'
@@ -95,7 +95,8 @@ export default {
             this.cancel();
           })
           .catch((error) => {
-            console.error('Ошибка при создании пользователя:', error);
+            if (error.response?.status === 401) return;
+            console.error('Ошибка при создании пользователя:', error.response?.status || error.message);
             this.cancel();
           });
     },

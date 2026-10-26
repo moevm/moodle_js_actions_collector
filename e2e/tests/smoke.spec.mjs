@@ -1,4 +1,4 @@
-import {test, expect} from '@playwright/test';
+import {test, expect} from './fixtures.mjs';
 import {
   demo, collector, markedUrl, login, trackerReady, flush, identity,
   actionsFor, expectEvents, selectText, clipboardPermissions,

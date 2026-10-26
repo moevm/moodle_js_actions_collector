@@ -124,6 +124,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - UserAccessToken: []
     post:
       tags:
       - api
@@ -154,6 +156,8 @@ paths:
             paused
         '507':
           description: The database storage budget is exhausted; new writes are paused
+      security:
+      - CollectionKey: []
   /api/statistics/{session_id}:
     get:
       tags:
@@ -181,6 +185,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - UserAccessToken: []
     delete:
       tags:
       - api
@@ -203,6 +209,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - UserAccessToken: []
   /api/statistics/page:
     post:
       tags:
@@ -235,6 +243,8 @@ paths:
             paused
         '507':
           description: The database storage budget is exhausted; new writes are paused
+      security:
+      - CollectionKey: []
   /api/user/:
     get:
       tags:
@@ -252,6 +262,8 @@ paths:
                   $ref: '#/components/schemas/User'
                 type: array
                 title: Response Get All Users Api User  Get
+      security:
+      - UserAccessToken: []
     post:
       tags:
       - api
@@ -282,6 +294,8 @@ paths:
             paused
         '507':
           description: The database storage budget is exhausted; new writes are paused
+      security:
+      - UserAccessToken: []
   /api/user/{user_id}:
     get:
       tags:
@@ -309,6 +323,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - UserAccessToken: []
     put:
       tags:
       - api
@@ -346,6 +362,8 @@ paths:
             paused
         '507':
           description: The database storage budget is exhausted; new writes are paused
+      security:
+      - UserAccessToken: []
     delete:
       tags:
       - api
@@ -368,6 +386,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - UserAccessToken: []
   /api/auth/sign-in:
     post:
       tags:
@@ -387,7 +407,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/AuthSession'
+        '401':
+          description: Invalid credentials
+        '503':
+          description: Authentication unavailable
         '422':
           description: Validation Error
           content:
@@ -525,6 +549,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - UserAccessToken: []
   /api/download/sessions:
     get:
       tags:
@@ -538,6 +564,8 @@ paths:
           content:
             application/json:
               schema: {}
+      security:
+      - UserAccessToken: []
   /api/healthcheck/storage:
     get:
       tags:
@@ -552,6 +580,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StorageSnapshot'
+      security:
+      - UserAccessToken: []
 components:
   schemas:
     CreatePageData:
@@ -681,6 +711,8 @@ components:
           title: Email
         password:
           type: string
+          maxLength: 1024
+          minLength: 1
           title: Password
       type: object
       required:
@@ -880,6 +912,8 @@ components:
           title: Email
         password:
           type: string
+          maxLength: 1024
+          minLength: 1
           title: Password
       type: object
       required:
@@ -919,6 +953,8 @@ components:
         password:
           anyOf:
           - type: string
+            maxLength: 1024
+            minLength: 1
           - type: 'null'
           title: Password
       type: object
@@ -928,7 +964,6 @@ components:
       - lastname
       - email
       - position
-      - password
       title: UpdateUser
       example:
         email: iiivanov@edu.ru
@@ -957,9 +992,6 @@ components:
           title: Email
         position:
           $ref: '#/components/schemas/Role'
-        password:
-          type: string
-          title: Password
       type: object
       required:
       - name
@@ -967,14 +999,12 @@ components:
       - lastname
       - email
       - position
-      - password
       title: User
       example:
         email: iiivanov@edu.ru
         id: bf6e2523-6d0d-4e82-9206-c9ff6af373a1
         lastname: Иванович
         name: Иван
-        password: sdfsdfwgesdgcx
         position: regular
         surname: Иванов
     ValidationError:
@@ -1053,3 +1083,50 @@ components:
       - checked_at
       - check_interval_seconds
       title: StorageSnapshot
+    AuthSession:
+      properties:
+        _id:
+          type: string
+          title: ' Id'
+        name:
+          type: string
+          title: Name
+        surname:
+          type: string
+          title: Surname
+        lastname:
+          type: string
+          title: Lastname
+        email:
+          type: string
+          format: email
+          title: Email
+        position:
+          $ref: '#/components/schemas/Role'
+        access_token:
+          type: string
+          title: Access Token
+        token_type:
+          const: bearer
+          title: Token Type
+          default: bearer
+        expires_in:
+          type: integer
+          title: Expires In
+      type: object
+      required:
+      - name
+      - surname
+      - lastname
+      - email
+      - position
+      - access_token
+      - expires_in
+      title: AuthSession
+  securitySchemes:
+    UserAccessToken:
+      type: http
+      scheme: bearer
+    CollectionKey:
+      type: http
+      scheme: bearer
