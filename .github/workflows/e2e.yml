@@ -1,0 +1,29 @@
+name: Browser smoke tests
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the demo stack
+        run: bash scripts/start.sh
+      - name: Run Chromium tests
+        run: bash scripts/test.sh
+      - name: Collect service logs
+        if: always()
+        run: |
+          mkdir -p reports/e2e
+          docker compose logs --no-color > reports/e2e/stack.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-smoke-report
+          path: reports/e2e/
+          retention-days: 7
+      - name: Stop services
+        if: always()
+        run: docker compose down

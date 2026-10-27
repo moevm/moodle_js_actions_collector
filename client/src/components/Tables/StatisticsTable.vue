@@ -42,6 +42,7 @@ export default {
         { title: "Тип события", key: "eventType", sortable: false, align: "center" },
         { title: "Тип элемента", key: "elementType", sortable: false, align: "center" },
         { title: "Название элемента", key: "elementName", sortable: false, align: "center" },
+        { title: "Детали события", key: "details", sortable: false, align: "center" },
       ],
     };
   }

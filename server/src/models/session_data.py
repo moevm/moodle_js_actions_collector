@@ -1,16 +1,31 @@
 import uuid
-from pydantic import BaseModel, EmailStr, HttpUrl, Field
-from datetime import datetime
-from typing import List
+from pydantic import BaseModel, EmailStr, HttpUrl, Field, field_validator
+from datetime import datetime, timezone
+from typing import List, Optional, Literal
+
+from src.models.constraints import MongoObjectId, MoodleUserId, utc_datetime
+
+
+class EventDetails(BaseModel):
+    checked: Optional[bool] = None
+    selected_indices: Optional[List[int]] = None
+    option_count: Optional[int] = Field(default=None, ge=0)
+    keyboard_action: Optional[Literal["typing", "editing"]] = None
 
 
 class Payload(BaseModel):
-    timestamp: datetime = Field(default_factory=lambda: datetime.now().isoformat())
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     element_type: str = Field(...)
     element_name: str = Field(...)
     action_type: str = Field(...)
     event_type: str = Field(...)
     element_html: str = Field(..., description="The HTML content of the element")
+    details: Optional[EventDetails] = None
+
+    @field_validator("timestamp")
+    @classmethod
+    def utc_timestamp(cls, value: datetime) -> datetime:
+        return utc_datetime(value)
 
     class Config:
         populate_by_field_name = True
@@ -117,8 +132,8 @@ class SessionData(BaseModel):
 
 
 class CreateSessionData(BaseModel):
-    student_id: int = Field(...)
-    session_id: str = Field(...)
+    student_id: MoodleUserId = Field(...)
+    session_id: MongoObjectId = Field(..., description="24-character page metadata ObjectId returned by POST /statistics/page")
     student: str = Field(...)
     email: EmailStr = Field(...)
     course: str = Field(...)
@@ -133,7 +148,8 @@ class CreateSessionData(BaseModel):
             "examples": [
                 {
                     "student_id": 1,
-                    "session_id": str(uuid.uuid4()),
+                    "session_id": "60d5ec49f1a4a21f6c8b4567",
+                    "tabID": "example-tab",
                     "student": "Иванов Иван",
                     "email": "iiivanov@edu.ru",
                     "course": "Курс молодого бойца",
@@ -149,7 +165,8 @@ class CreateSessionData(BaseModel):
                 },
                 {
                     "student_id": 1,
-                    "session_id": str(uuid.uuid4()),
+                    "session_id": "60d5ec49f1a4a21f6c8b4567",
+                    "tabID": "example-tab",
                     "student": "Иванов Иван",
                     "email": "iiivanov@edu.ru",
                     "course": "Курс молодого бойца",
@@ -165,7 +182,8 @@ class CreateSessionData(BaseModel):
                 },
                 {
                     "student_id": 1,
-                    "session_id": str(uuid.uuid4()),
+                    "session_id": "60d5ec49f1a4a21f6c8b4567",
+                    "tabID": "example-tab",
                     "student": "Иванов Иван",
                     "email": "iiivanov@edu.ru",
                     "course": "Курс молодого бойца",
@@ -193,7 +211,6 @@ class PageData(BaseModel):
     page: HttpUrl = Field(...)
     browser: str = Field(...)
     title: str = Field(...)
-    page_html: str = Field(...)
     window: Window = Field(...)
 
     class Config:
@@ -205,7 +222,6 @@ class PageData(BaseModel):
                 "page": "http://e.moevm.info",
                 "title": "kakoy-to title",
                 "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-                "page_html": '<html></html>',
                 "window": {
                     "width": 1200,
                     "height": 800
@@ -215,21 +231,23 @@ class PageData(BaseModel):
 
 
 class CreatePageData(BaseModel):
+    """Page metadata only; legacy page_html and other unknown fields are ignored."""
+
     page: HttpUrl = Field(...)
     browser: str = Field(...)
     title: str = Field(...)
-    page_html: str = Field(...)
     window: Window = Field(...)
 
     class Config:
         populate_by_field_name = True
         arbitrary_types_allowed = True
+        # Accept older plugins, but discard their HTML before saving metadata.
+        extra = "ignore"
         json_schema_extra = {
             "example": {
                 "page": "http://e.moevm.info",
                 "title": "kakoy-to title",
                 "browser": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit",
-                "page_html": '<html></html>',
                 "window": {
                     "width": 1200,
                     "height": 800

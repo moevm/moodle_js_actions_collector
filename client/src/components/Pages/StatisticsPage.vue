@@ -17,7 +17,7 @@
         ></DateTime>
         <button id="reset-end-date" class="reset-date" @click="resetEndDate">Сброс</button>
       </div>
-      <v-btn variant="outlined" value="download" icon="mdi-download" class="download-button" @click="downloadDialog=true"></v-btn>
+      <v-btn variant="outlined" value="download" icon="mdi-download" class="download-button" :disabled="statisticsLoading || Boolean(statisticsError)" @click="downloadDialog=true"></v-btn>
       <Dialog v-model="downloadDialog" @close="downloadDialog=false" :params="params"></Dialog>
       <div class="choose-type">
         <v-btn-toggle class="stat-type" v-model="selectedType" variant="outlined" color="blue">
@@ -48,23 +48,41 @@
         <button id="reset-search" class="reset-button" @click="resetSearch">Сброс</button>
       </div>
     </Filters>
-    <div class="col-md-12">
-      <button @click="prevPage">
-        Previous
+    <nav class="statistics-pagination" aria-label="Навигация по статистике">
+      <button type="button" class="statistics-pagination__button" @click="getStatistics">Обновить</button>
+      <button
+        type="button"
+        class="statistics-pagination__button"
+        :disabled="page <= 1"
+        @click="prevPage"
+      >
+        Назад
       </button>
-      <div class="mb-3">
-        Items per Page:
-        <select v-model="pageSize" @change="handlePageSizeChange($event)">
+      <div class="statistics-pagination__size">
+        <label for="statistics-page-size">На странице:</label>
+        <select
+          id="statistics-page-size"
+          class="statistics-pagination__select"
+          v-model="pageSize"
+          @change="handlePageSizeChange($event)"
+        >
           <option v-for="size in pageSizes" :key="size" :value="size">
             {{ size }}
           </option>
         </select>
       </div>
-      <button @click="nextPage">
-        Next
+      <button
+        type="button"
+        class="statistics-pagination__button"
+        :disabled="page >= totalPages"
+        @click="nextPage"
+      >
+        Вперёд
       </button>
-  </div>
-    <StatisticsTable v-if="selectedType === 'table'" 
+    </nav>
+    <p v-if="statisticsLoading" role="status">Загрузка статистики…</p>
+    <p v-if="statisticsError" role="alert">{{ statisticsError }}</p>
+    <StatisticsTable v-if="selectedType === 'table'"
       :info="statisticsInfo">
     </StatisticsTable>
     <Chart v-else :info="statisticsInfo"></Chart>
@@ -74,7 +92,7 @@
 <script>
 import Navbar from "@/components/Navbar.vue";
 import StatisticsTable from "@/components/Tables/StatisticsTable.vue";
-import axios from "axios";
+import axios from "@/api.mjs";
 import Filters from "@/components/Filters/Filters.vue";
 import Chart from "@/components/Chart.vue";
 import DateTime from "@/components/Filters/DateTime.vue";
@@ -92,6 +110,10 @@ export default {
   data() {
     return {
       statisticsInfo: [],
+      statisticsRequestId: 0,
+      statisticsAbortController: null,
+      statisticsLoading: false,
+      statisticsError: '',
       name: "",
       search: "",
       selectedType: 'table',
@@ -119,13 +141,14 @@ export default {
       page: 1,
       count: 1,
       pageSize: 10,
-      pageSizes: [5,10,15,20,25,-1],
+      pageSizes: [5,10,15,20,25,50,100],
       totalPages: 1,
     };
   },
 
   beforeMount() {
-    this.today = new Date().toISOString().slice(0, 16);
+    const now = new Date();
+    this.today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     let name = sessionStorage.getItem("name");
     if (name) {
       this.name = name;
@@ -142,56 +165,66 @@ export default {
     this.getStatistics();
   },
 
+  beforeUnmount() {
+    this.statisticsRequestId += 1;
+    this.statisticsAbortController?.abort();
+    this.statisticsAbortController = null;
+  },
+
   watch: {
     beginTimestamp() {
-      this.getStatistics();
+      this.refreshFilters();
     },
     endTimestamp() {
-      this.getStatistics();
+      this.refreshFilters();
     },
     ID() {
       if (this.ID === null && this.startSearch === true) {
-        this.getStatistics();
+        this.refreshFilters();
       }
     },
     FIO() {
       if (this.FIO === null && this.startSearch === true) {
-        this.getStatistics();
+        this.refreshFilters();
       }
     },
     email() {
       if (this.email === null && this.startSearch === true) {
-        this.getStatistics();
+        this.refreshFilters();
       }
     },
     course() {
       if (this.course === null && this.startSearch === true) {
-        this.getStatistics();
+        this.refreshFilters();
       }
     },
     actionType() {
       if (this.actionType === null && this.startSearch === true) {
-        this.getStatistics();
+        this.refreshFilters();
       }
     },
     eventType() {
       if (this.eventType === null && this.startSearch === true) {
-        this.getStatistics();
+        this.refreshFilters();
       }
     },
     elementType() {
       if (this.elementType === null && this.startSearch === true) {
-        this.getStatistics();
+        this.refreshFilters();
       }
     },
     elementName() {
       if (this.elementName === null && this.startSearch === true) {
-        this.getStatistics();
+        this.refreshFilters();
       }
     },
   },
 
   methods: {
+    refreshFilters() {
+      this.page = 1;
+      return this.getStatistics();
+    },
     prevPage() {
       if (this.page != 1){
         this.page = this.page - 1;
@@ -207,7 +240,7 @@ export default {
     },
 
     handlePageSizeChange(event) {
-      this.pageSize = event.target.value;
+      this.pageSize = Number(event.target.value);
       this.page = 1;
       this.getStatistics();
     },
@@ -222,6 +255,7 @@ export default {
 
     startSearchFilters() {
       this.startSearch = true;
+      this.page = 1;
       this.getStatistics();
     },
 
@@ -237,96 +271,90 @@ export default {
       this.elementType = '';
       this.elementName = '';
       this.page = 1;
-      if (this.startSearch === true) {
-        this.getStatistics();
-        this.startSearch = false;
-      }
+      this.startSearch = false;
+      return this.getStatistics();
     },
 
-    getStatistics() {
-      this.statisticsInfo = []
-      this.params = {}
-      const searchParams = {
-        page: this.page,
-        pageSize: this.pageSize,
-        student_id: Number(this.ID),
-        student_name: this.FIO,
-        student_email: this.email,
-        tabID: this.tabID,
-        course_title: this.course,
-        url: this.url,
-        action_type: this.actionType,
-        event_type: this.eventType,
-        element_type: this.elementType,
-        element_name: this.elementName,
-      }
-
-      this.params = {
-        page: this.page,
-        pageSize:this.pageSize
-      }
-
-      if (this.beginTimestamp.length === 0 && this.endTimestamp.length === 0) {
-        this.params = {}
-      }
-      else if (this.beginTimestamp.length !== 0 && this.endTimestamp.length === 0) {
-        this.params = {
-          begin_timestamp: this.beginTimestamp
+    async getStatistics() {
+      const requestId = ++this.statisticsRequestId;
+      this.statisticsAbortController?.abort();
+      const controller = new AbortController();
+      this.statisticsAbortController = controller;
+      this.statisticsLoading = true;
+      this.statisticsError = '';
+      this.statisticsInfo = [];
+      this.count = 0;
+      this.totalPages = 1;
+      const pageSize = Number(this.pageSize);
+      try {
+        const params = {page: Number(this.page), pageSize};
+        const text = {
+          student_name: this.FIO, student_email: this.email, course_title: this.course,
+          action_type: this.actionType, event_type: this.eventType,
+          element_type: this.elementType, element_name: this.elementName,
+        };
+        for (const [key, value] of Object.entries(text)) {
+          if (value !== null && value !== undefined && value !== '') params[key] = value;
         }
-      }
-      else if (this.beginTimestamp.length === 0 && this.endTimestamp.length !== 0) {
-        this.params = {
-          end_timestamp: this.endTimestamp
+        if (this.ID !== null && this.ID !== undefined && String(this.ID).trim() !== '') {
+          params.student_id = Number(this.ID);
         }
-      }
-      else {
-        this.params = {
-          begin_timestamp: this.beginTimestamp,
-          end_timestamp: this.endTimestamp
-        }
-      }
-
-
-      Object.assign(this.params, searchParams)
-
-      axios
-          .get(STAT_URL, {params: searchParams})
-          .then((response) => {
-            console.log(response);
-            let stats = response.data[0]
-            this.count = response.data[1]
-            this.totalPages = Math.ceil(this.count/this.pageSize)
-            stats.forEach(element => {
-              let firstLayer = {
-                FIO: element.student,
-                course: element.course,
-                url: element.url,
-                studentId: element.student_id,
-                email: element.email,
-                tabID: element.tabID
-              };
-              element.actions.forEach(action =>{
-                let secondLayer = {...firstLayer};
-                secondLayer.typeAction = action.action_type;
-                secondLayer.eventType = action.event_type;
-                secondLayer.elementType = action.element_type;
-                secondLayer.elementName = action.element_name;
-                const dateTime = new Date(action.timestamp);
-                const hours = dateTime.getHours().toString().padStart(2, '0');
-                const minutes = dateTime.getMinutes().toString().padStart(2, '0');
-                const seconds = dateTime.getSeconds().toString().padStart(2, '0');
-                const milliseconds = dateTime.getMilliseconds().toString().padStart(3, '0');
-                secondLayer.time = `${hours}:${minutes}:${seconds}.${milliseconds}`;
-                secondLayer.date = dateTime.toLocaleDateString('ru-RU');
-                secondLayer.Date = dateTime;
-                this.statisticsInfo.push(secondLayer);
-              })
-            });
-          })
-          .catch((error) => {
-            alert("Ошибка при получении данных");
-            console.error("Ошибка при получении данных:", error);
+        if (this.beginTimestamp) params.begin_timestamp = new Date(this.beginTimestamp).toISOString();
+        if (this.endTimestamp) params.end_timestamp = new Date(this.endTimestamp).toISOString();
+        this.params = params;
+        const response = await axios.get(STAT_URL, {params, signal: controller.signal});
+        if (requestId !== this.statisticsRequestId || controller.signal.aborted) return;
+        const stats = response.data[0];
+        const rows = [];
+        stats.forEach(element => {
+          const firstLayer = {
+            FIO: element.student,
+            course: element.course,
+            url: element.url,
+            studentId: element.student_id,
+            email: element.email,
+            tabID: element.tabID
+          };
+          element.actions.forEach(action =>{
+            const secondLayer = {...firstLayer};
+            secondLayer.typeAction = action.action_type;
+            secondLayer.eventType = action.event_type;
+            secondLayer.elementType = action.element_type;
+            secondLayer.elementName = action.element_name;
+            const details = action.details || {};
+            const descriptions = [];
+            if (typeof details.checked === 'boolean') descriptions.push(details.checked ? 'Отмечен' : 'Снят');
+            if (Array.isArray(details.selected_indices)) descriptions.push(`Индексы выбора: ${details.selected_indices.join(', ')}; вариантов: ${details.option_count}`);
+            if (details.keyboard_action) descriptions.push(details.keyboard_action === 'typing' ? 'Ввод с клавиатуры' : 'Редактирование с клавиатуры');
+            secondLayer.details = descriptions.join('; ');
+            const timestamp = action.timestamp;
+            const dateTime = new Date(/[zZ]$|[+-]\d\d:\d\d$/.test(timestamp) ? timestamp : timestamp + 'Z');
+            const hours = dateTime.getHours().toString().padStart(2, '0');
+            const minutes = dateTime.getMinutes().toString().padStart(2, '0');
+            const seconds = dateTime.getSeconds().toString().padStart(2, '0');
+            const milliseconds = dateTime.getMilliseconds().toString().padStart(3, '0');
+            secondLayer.time = `${hours}:${minutes}:${seconds}.${milliseconds}`;
+            secondLayer.date = dateTime.toLocaleDateString('ru-RU');
+            secondLayer.Date = dateTime;
+            rows.push(secondLayer);
           });
+        });
+        this.statisticsInfo = rows;
+        this.count = response.data[1];
+        this.totalPages = Math.max(1, Math.ceil(this.count / pageSize));
+      } catch (error) {
+        if (requestId !== this.statisticsRequestId || controller.signal.aborted
+            || error.code === 'ERR_CANCELED' || error.response?.status === 401) return;
+        this.statisticsError = error.response?.status === 422
+          ? 'Проверьте значения фильтров: текст должен быть не длиннее 256 символов.'
+          : 'Не удалось загрузить статистику. Повторите запрос.';
+        console.error('Ошибка при получении данных:', error.response?.status || error.message);
+      } finally {
+        if (requestId === this.statisticsRequestId) {
+          this.statisticsLoading = false;
+          this.statisticsAbortController = null;
+        }
+      }
     }
   }
 };
@@ -334,6 +362,66 @@ export default {
 
 <style>
 @import '@/colors.css';
+.statistics-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 96%;
+  margin: 12px auto;
+  padding: 12px 16px;
+  border: 1px solid var(--white-2);
+  border-radius: 8px;
+  background-color: var(--white-4);
+  color: var(--grey-4);
+}
+
+.statistics-pagination__size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statistics-pagination__button,
+.statistics-pagination__select {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--blue-2);
+  border-radius: 6px;
+  background-color: var(--white-1);
+  color: var(--blue-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+.statistics-pagination__button {
+  min-width: 96px;
+  font-weight: 600;
+}
+
+.statistics-pagination__select {
+  min-width: 80px;
+  appearance: auto;
+}
+
+.statistics-pagination__button:hover:not(:disabled),
+.statistics-pagination__select:hover {
+  background-color: var(--white-5);
+}
+
+.statistics-pagination__button:focus-visible,
+.statistics-pagination__select:focus-visible {
+  outline: 2px solid var(--blue-2);
+  outline-offset: 3px;
+}
+
+.statistics-pagination__button:disabled {
+  border-color: var(--grey-1);
+  background-color: var(--white-4);
+  color: var(--grey-7);
+  cursor: not-allowed;
+}
+
 .second-filter {
   padding-top: 0;
   padding-bottom: 0;
@@ -419,4 +507,3 @@ export default {
   margin-left: 50%;
 }
 </style>
-  

@@ -12,3 +12,11 @@ class UserEmptyDataError(Exception):
 
 class SessionNotFoundError(Exception):
     pass
+
+
+class ProtectedAdminError(Exception):
+    pass
+
+
+class UserManagementUnavailableError(Exception):
+    pass

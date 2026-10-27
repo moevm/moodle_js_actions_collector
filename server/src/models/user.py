@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 from enum import Enum
@@ -17,7 +17,6 @@ class User(BaseModel):
     lastname: str = Field(...)
     email: EmailStr = Field(...)
     position: Role = Field(...)
-    password: str = Field(...)
 
     class Config:
         populate_by_field_name = True
@@ -29,7 +28,6 @@ class User(BaseModel):
                 "lastname": "Иванович",
                 "email": "iiivanov@edu.ru",
                 "position": Role.regular,
-                "password": "sdfsdfwgesdgcx"
             }
         }
 
@@ -40,7 +38,7 @@ class UpdateUser(BaseModel):
     lastname: Optional[str]
     email: Optional[EmailStr]
     position: Optional[Role]
-    password: Optional[str]
+    password: Optional[str] = Field(default=None, min_length=1, max_length=1024)
 
     class Config:
         populate_by_field_name = True
@@ -61,7 +59,7 @@ class CreateUser(BaseModel):
     surname: str = Field(...)
     lastname: str = Field(...)
     email: EmailStr = Field(...)
-    password: str = Field(...)
+    password: str = Field(..., min_length=1, max_length=1024)
 
     class Config:
         populate_by_field_name = True
@@ -78,7 +76,7 @@ class CreateUser(BaseModel):
 
 class SignInData(BaseModel):
     email: EmailStr = Field(...)
-    password: str = Field(...)
+    password: str = Field(..., min_length=1, max_length=1024)
 
     class Config:
         populate_by_field_name = True
@@ -88,3 +86,10 @@ class SignInData(BaseModel):
                 "password": "sdfsdfwgesdgcx"
             }
         }
+
+
+class AuthSession(User):
+    model_config = {"json_schema_extra": {}}
+    access_token: str
+    token_type: Literal["bearer"] = "bearer"
+    expires_in: int
