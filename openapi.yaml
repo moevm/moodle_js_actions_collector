@@ -10,23 +10,9 @@ paths:
       - statistics
       summary: Get All Sessions
       operationId: get_all_sessions_api_statistics__get
+      security:
+      - UserAccessToken: []
       parameters:
-      - name: page
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-          title: Page
-      - name: pageSize
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: -1
-          default: 10
-          title: Pagesize
       - name: begin_timestamp
         in: query
         required: false
@@ -51,6 +37,8 @@ paths:
         schema:
           anyOf:
           - type: integer
+            maximum: 9223372036854775807
+            minimum: 0
           - type: 'null'
           title: Student Id
       - name: student_name
@@ -59,6 +47,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Student Name
       - name: student_email
@@ -67,6 +57,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Student Email
       - name: course_title
@@ -75,6 +67,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Course Title
       - name: action_type
@@ -83,6 +77,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Action Type
       - name: event_type
@@ -91,6 +87,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Event Type
       - name: element_type
@@ -99,6 +97,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Element Type
       - name: element_name
@@ -107,8 +107,28 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Element Name
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 92233720368547758
+          minimum: 1
+          default: 1
+          title: Page
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 10
+          title: Pagesize
       responses:
         '200':
           description: Get statistics
@@ -124,6 +144,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '503':
+          description: Statistics database is unavailable
     post:
       tags:
       - api
@@ -149,6 +171,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '503':
+          description: Storage monitoring or statistics database is unavailable
+        '507':
+          description: The database storage budget is exhausted; new writes are paused
+      security:
+      - CollectionKey: []
   /api/statistics/{session_id}:
     get:
       tags:
@@ -162,6 +190,9 @@ paths:
         required: true
         schema:
           type: string
+          minLength: 24
+          maxLength: 24
+          pattern: ^[0-9a-fA-F]{24}$
           title: Session Id
       responses:
         '200':
@@ -176,6 +207,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: A valid ID has no matching statistics record
+        '503':
+          description: Statistics database is unavailable
+      security:
+      - UserAccessToken: []
     delete:
       tags:
       - api
@@ -188,6 +225,9 @@ paths:
         required: true
         schema:
           type: string
+          minLength: 24
+          maxLength: 24
+          pattern: ^[0-9a-fA-F]{24}$
           title: Session Id
       responses:
         '204':
@@ -198,6 +238,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: A valid ID has no matching statistics record
+        '503':
+          description: Statistics database is unavailable
+      security:
+      - UserAccessToken: []
   /api/statistics/page:
     post:
       tags:
@@ -225,6 +271,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '503':
+          description: Storage monitoring or statistics database is unavailable
+        '507':
+          description: The database storage budget is exhausted; new writes are paused
+      security:
+      - CollectionKey: []
   /api/user/:
     get:
       tags:
@@ -242,6 +294,8 @@ paths:
                   $ref: '#/components/schemas/User'
                 type: array
                 title: Response Get All Users Api User  Get
+      security:
+      - UserAccessToken: []
     post:
       tags:
       - api
@@ -267,6 +321,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '409':
+          description: Email is already in use, or the protected administrator cannot be removed/demoted
+        '503':
+          description: User management or storage monitoring is unavailable
+        '507':
+          description: The database storage budget is exhausted; new writes are paused
+      security:
+      - UserAccessToken: []
   /api/user/{user_id}:
     get:
       tags:
@@ -280,6 +342,9 @@ paths:
         required: true
         schema:
           type: string
+          minLength: 24
+          maxLength: 24
+          pattern: ^[0-9a-fA-F]{24}$
           title: User Id
       responses:
         '200':
@@ -294,11 +359,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: A valid ID has no matching user
+      security:
+      - UserAccessToken: []
     put:
       tags:
       - api
       - user
       summary: Update User
+      description: On the first deletion or demotion, the existing administrator with the lowest MongoDB
+        _id is permanently protected in collector_settings/protected-administrator. This account cannot
+        be deleted or demoted even when other admins exist; its name, email and password can be changed.
+        Other administrators can be deleted or demoted. The reference survives restarts. If manually removed
+        from MongoDB, restore the protected account and its admin role from backup; do not delete the guard
+        reference to bypass protection.
       operationId: update_user_api_user__user_id__put
       parameters:
       - name: user_id
@@ -306,6 +381,9 @@ paths:
         required: true
         schema:
           type: string
+          minLength: 24
+          maxLength: 24
+          pattern: ^[0-9a-fA-F]{24}$
           title: User Id
       requestBody:
         required: true
@@ -326,11 +404,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '409':
+          description: Email is already in use, or the protected administrator cannot be removed/demoted
+        '503':
+          description: User management or storage monitoring is unavailable
+        '507':
+          description: The database storage budget is exhausted; new writes are paused
+        '404':
+          description: A valid ID has no matching user
+      security:
+      - UserAccessToken: []
     delete:
       tags:
       - api
       - user
       summary: Delete User
+      description: The permanently protected administrator cannot be deleted. Other administrators and regular
+        accounts can be removed. See Update User for protection and recovery.
       operationId: delete_user_api_user__user_id__delete
       parameters:
       - name: user_id
@@ -338,16 +428,27 @@ paths:
         required: true
         schema:
           type: string
+          minLength: 24
+          maxLength: 24
+          pattern: ^[0-9a-fA-F]{24}$
           title: User Id
       responses:
         '204':
           description: Delete a user
+        '409':
+          description: The protected administrator cannot be deleted
+        '503':
+          description: User management or storage monitoring is unavailable
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: A valid ID has no matching user
+      security:
+      - UserAccessToken: []
   /api/auth/sign-in:
     post:
       tags:
@@ -367,7 +468,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/AuthSession'
+        '401':
+          description: Invalid credentials
+        '429':
+          description: Login rate or concurrency limit; see Retry-After
+        '503':
+          description: Authentication unavailable
         '422':
           description: Validation Error
           content:
@@ -394,23 +501,9 @@ paths:
       - download
       summary: Download Data
       operationId: download_data_api_download_statistics_get
+      security:
+      - UserAccessToken: []
       parameters:
-      - name: page
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-          title: Page
-      - name: pageSize
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: -1
-          default: 10
-          title: Pagesize
       - name: begin_timestamp
         in: query
         required: false
@@ -435,6 +528,8 @@ paths:
         schema:
           anyOf:
           - type: integer
+            maximum: 9223372036854775807
+            minimum: 0
           - type: 'null'
           title: Student Id
       - name: student_name
@@ -443,6 +538,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Student Name
       - name: student_email
@@ -451,6 +548,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Student Email
       - name: course_title
@@ -459,6 +558,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Course Title
       - name: action_type
@@ -467,6 +568,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Action Type
       - name: event_type
@@ -475,6 +578,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Event Type
       - name: element_type
@@ -483,6 +588,8 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Element Type
       - name: element_name
@@ -491,14 +598,20 @@ paths:
         schema:
           anyOf:
           - type: string
+            maxLength: 256
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Element Name
       responses:
         '200':
-          description: Download statistics
+          description: Stream all statistics matching the filters, without table pagination
           content:
             application/json:
               schema: {}
+        '429':
+          description: Another export is running
+        '503':
+          description: Export unavailable
         '422':
           description: Validation Error
           content:
@@ -514,10 +627,32 @@ paths:
       operationId: download_sessions_api_download_sessions_get
       responses:
         '200':
-          description: Download page metadata without HTML
+          description: Stream page metadata without HTML
           content:
             application/json:
               schema: {}
+        '429':
+          description: Another export is running
+        '503':
+          description: Export unavailable
+      security:
+      - UserAccessToken: []
+  /api/healthcheck/storage:
+    get:
+      tags:
+      - api
+      - healthcheck
+      summary: Storage Status
+      operationId: storage_status_api_healthcheck_storage_get
+      responses:
+        '200':
+          description: Cached MongoDB storage budget status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageSnapshot'
+      security:
+      - UserAccessToken: []
 components:
   schemas:
     CreatePageData:
@@ -555,10 +690,16 @@ components:
       properties:
         student_id:
           type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
           title: Student Id
         session_id:
           type: string
+          maxLength: 24
+          minLength: 24
+          pattern: ^[0-9a-fA-F]{24}$
           title: Session Id
+          description: 24-character page metadata ObjectId returned by POST /statistics/page
         student:
           type: string
           title: Student
@@ -597,12 +738,13 @@ components:
           element_name: сохранить
           element_type: button
           event_type: mousedown
-          timestamp: '2026-10-07T07:50:52.023866'
+          timestamp: '2026-10-26T23:46:41.486646'
         course: Курс молодого бойца
         email: iiivanov@edu.ru
-        session_id: 1f2297b3-affb-420b-beb2-ea5ae488b4a0
+        session_id: 60d5ec49f1a4a21f6c8b4567
         student: Иванов Иван
         student_id: 1
+        tabID: example-tab
         url: https://e.moevm.info/course/view.php?id=2
       - actions:
         - action_type: hidden
@@ -610,12 +752,13 @@ components:
           element_name: сохранить
           element_type: page
           event_type: visibilitychange
-          timestamp: '2026-10-07T07:50:52.023874'
+          timestamp: '2026-10-26T23:46:41.486651'
         course: Курс молодого бойца
         email: iiivanov@edu.ru
-        session_id: 74686f52-b103-46ab-ad3c-54c3f129f1ea
+        session_id: 60d5ec49f1a4a21f6c8b4567
         student: Иванов Иван
         student_id: 1
+        tabID: example-tab
         url: https://e.moevm.info/course/view.php?id=2
       - actions:
         - action_type: visible
@@ -623,12 +766,13 @@ components:
           element_name: сохранить
           element_type: page
           event_type: visibilitychange
-          timestamp: '2026-10-07T07:50:52.023878'
+          timestamp: '2026-10-26T23:46:41.486654'
         course: Курс молодого бойца
         email: iiivanov@edu.ru
-        session_id: 9a3d2d42-0218-4dc7-afd4-57761abb4fe6
+        session_id: 60d5ec49f1a4a21f6c8b4567
         student: Иванов Иван
         student_id: 1
+        tabID: example-tab
         url: https://e.moevm.info/course/view.php?id=2
     CreateUser:
       properties:
@@ -647,6 +791,8 @@ components:
           title: Email
         password:
           type: string
+          maxLength: 1024
+          minLength: 1
           title: Password
       type: object
       required:
@@ -846,6 +992,8 @@ components:
           title: Email
         password:
           type: string
+          maxLength: 1024
+          minLength: 1
           title: Password
       type: object
       required:
@@ -885,6 +1033,8 @@ components:
         password:
           anyOf:
           - type: string
+            maxLength: 1024
+            minLength: 1
           - type: 'null'
           title: Password
       type: object
@@ -894,7 +1044,6 @@ components:
       - lastname
       - email
       - position
-      - password
       title: UpdateUser
       example:
         email: iiivanov@edu.ru
@@ -923,9 +1072,6 @@ components:
           title: Email
         position:
           $ref: '#/components/schemas/Role'
-        password:
-          type: string
-          title: Password
       type: object
       required:
       - name
@@ -933,14 +1079,12 @@ components:
       - lastname
       - email
       - position
-      - password
       title: User
       example:
         email: iiivanov@edu.ru
         id: bf6e2523-6d0d-4e82-9206-c9ff6af373a1
         lastname: Иванович
         name: Иван
-        password: sdfsdfwgesdgcx
         position: regular
         surname: Иванов
     ValidationError:
@@ -977,3 +1121,92 @@ components:
       - width
       - height
       title: Window
+    StorageSnapshot:
+      properties:
+        limit_bytes:
+          type: integer
+          title: Limit Bytes
+        allocated_bytes:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Allocated Bytes
+        estimated_bytes:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Estimated Bytes
+        accepting_writes:
+          type: boolean
+          title: Accepting Writes
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        checked_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Checked At
+        check_interval_seconds:
+          type: number
+          title: Check Interval Seconds
+      type: object
+      required:
+      - limit_bytes
+      - allocated_bytes
+      - estimated_bytes
+      - accepting_writes
+      - reason
+      - checked_at
+      - check_interval_seconds
+      title: StorageSnapshot
+    AuthSession:
+      properties:
+        _id:
+          type: string
+          title: ' Id'
+        name:
+          type: string
+          title: Name
+        surname:
+          type: string
+          title: Surname
+        lastname:
+          type: string
+          title: Lastname
+        email:
+          type: string
+          format: email
+          title: Email
+        position:
+          $ref: '#/components/schemas/Role'
+        access_token:
+          type: string
+          title: Access Token
+        token_type:
+          const: bearer
+          title: Token Type
+          default: bearer
+        expires_in:
+          type: integer
+          title: Expires In
+      type: object
+      required:
+      - name
+      - surname
+      - lastname
+      - email
+      - position
+      - access_token
+      - expires_in
+      title: AuthSession
+  securitySchemes:
+    UserAccessToken:
+      type: http
+      scheme: bearer
+    CollectionKey:
+      type: http
+      scheme: bearer

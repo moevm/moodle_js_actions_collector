@@ -16,6 +16,7 @@ services:
       MOODLE_STUDENT_PASSWORD: ${MOODLE_STUDENT_PASSWORD:-StudentLocal123!}
       COLLECTOR_ADMIN_EMAIL: ${COLLECTOR_ADMIN_EMAIL:-collector@example.com}
       COLLECTOR_ADMIN_PASSWORD: ${COLLECTOR_ADMIN_PASSWORD:-CollectorLocal123!}
+      COLLECTOR_INGEST_KEY: ${COLLECTOR_INGEST_KEY:?Run python3 scripts/init-auth-secrets.py first}
     volumes:
       - ../../reports/e2e:/work/artifacts
     depends_on:

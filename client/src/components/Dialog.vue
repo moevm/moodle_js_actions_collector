@@ -5,7 +5,7 @@
         <v-checkbox
           v-model="selected"
           :disabled="downloading"
-          label="Выбранная статистика в формате json"
+          label="Вся статистика по выбранным фильтрам (JSON)"
           value="statistics"
         ></v-checkbox>
         <v-checkbox
@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import axios from "@/api.mjs";
 const STAT_FILE_URL = "/api/download/statistics";
 const PAGE_METADATA_FILE_URL = "/api/download/sessions";
 
@@ -84,10 +84,15 @@ export default {
               setTimeout(() => URL.revokeObjectURL(url), 60000);
             }
           } catch (error) {
+            if (error.response?.status === 401) return;
             failedFiles.push(file);
-            const status = error.response ? ` (HTTP ${error.response.status})` : "";
-            errors.push(`Не удалось скачать ${file}.json${status}. Повторите попытку.`);
-            console.error("Ошибка скачивания:", error);
+            if (error.response?.status === 429) {
+              errors.push("Другая выгрузка ещё выполняется. Повторите попытку после её завершения.");
+            } else {
+              const status = error.response ? ` (HTTP ${error.response.status})` : "";
+              errors.push(`Не удалось скачать ${file}.json${status}. Повторите попытку.`);
+            }
+            console.error("Ошибка скачивания:", error.response?.status || error.message);
           }
         }
       } finally {

@@ -1,11 +1,14 @@
 import logging
+from collections.abc import AsyncGenerator
+from contextlib import aclosing
+from typing import Any
 from datetime import datetime, timezone
 
 from bson import ObjectId
 from src.core.modules.database.errors import RepoNotFoundError
 from src.core.modules.service.errors import SessionNotFoundError
 
-from src.models.filter import SessionFilter
+from src.models.filter import SessionFilter, StatisticsFilter
 
 
 class StatisticsService:
@@ -17,7 +20,7 @@ class StatisticsService:
         try:
             return await self.repo.get_all_sessions(filters)
         except Exception as e:
-            logging.error(f"error getting all sessions: {str(e)}")
+            logging.error("Statistics query failed: %s", type(e).__name__)
             raise
 
     async def get_session(self, session_id):
@@ -25,7 +28,7 @@ class StatisticsService:
             return await self.repo.get_session(session_id)
         except Exception as e:
             if isinstance(e, RepoNotFoundError):
-                logging.error(f"error getting session {session_id}: {str(e)}")
+                logging.info("Statistics record not found")
                 raise SessionNotFoundError(f"error getting session {session_id}: {str(e)}") from e
             else:
                 raise
@@ -35,7 +38,7 @@ class StatisticsService:
             return await self.repo.delete_session(session_id)
         except Exception as e:
             if isinstance(e, RepoNotFoundError):
-                logging.error(f"error deleting session {session_id}: {str(e)}")
+                logging.info("Statistics record not found for deletion")
                 raise SessionNotFoundError(f"error deleting session {session_id}: {str(e)}") from e
             else:
                 raise
@@ -50,19 +53,22 @@ class StatisticsService:
                 action["timestamp"] = value
             return await self.repo.add_session(session_data)
         except Exception as e:
-            logging.error(f'error creating session data {session_data}: {str(e)}')
-            raise Exception(f'error creating session data {session_data}: {str(e)}') from e
+            logging.error("Statistics insert failed: %s", type(e).__name__)
+            raise
 
     async def create_page(self, page_data):
         try:
             return await self.pages.create_record(page_data)
         except Exception as e:
-            logging.error(f'error creating page {page_data}: {str(e)}')
-            raise Exception(f'error creating page {page_data}: {str(e)}') from e
-
-    async def get_pages(self):
-        try:
-            return await self.pages.get_all_records()
-        except Exception as e:
-            logging.error(f"error getting all pages: {str(e)}")
+            logging.error("Page metadata insert failed: %s", type(e).__name__)
             raise
+
+    async def iter_sessions(self, filters: StatisticsFilter) -> AsyncGenerator[dict[str, Any], None]:
+        async with aclosing(self.repo.iter_sessions(filters)) as records:
+            async for record in records:
+                yield record
+
+    async def iter_pages(self) -> AsyncGenerator[dict[str, Any], None]:
+        async with aclosing(self.pages.iter_records()) as records:
+            async for record in records:
+                yield record

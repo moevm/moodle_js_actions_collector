@@ -19,6 +19,7 @@ jobs:
       - name: Validate and build services
         run: |
           cp .env.example .env
+          python3 scripts/init-auth-secrets.py
           docker compose config --quiet
           docker compose --profile test config --quiet
           docker compose build

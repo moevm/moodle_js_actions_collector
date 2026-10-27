@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import {clearSession, getAccessToken} from './auth-state.mjs'
 
 const routes = [
     { path: '/', redirect: '/e.moevm.statistics/auth'},
@@ -11,6 +12,15 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(),
     routes
+})
+
+router.beforeEach(to => {
+    if (to.name === 'Authorization') {
+        clearSession()
+        return true
+    }
+    if (!getAccessToken()) return {name: 'Authorization'}
+    return true
 })
 
 export default router

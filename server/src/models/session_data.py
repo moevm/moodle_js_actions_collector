@@ -1,7 +1,9 @@
 import uuid
-from pydantic import BaseModel, EmailStr, HttpUrl, Field
-from datetime import datetime
+from pydantic import BaseModel, EmailStr, HttpUrl, Field, field_validator
+from datetime import datetime, timezone
 from typing import List, Optional, Literal
+
+from src.models.constraints import MongoObjectId, MoodleUserId, utc_datetime
 
 
 class EventDetails(BaseModel):
@@ -12,13 +14,18 @@ class EventDetails(BaseModel):
 
 
 class Payload(BaseModel):
-    timestamp: datetime = Field(default_factory=lambda: datetime.now().isoformat())
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     element_type: str = Field(...)
     element_name: str = Field(...)
     action_type: str = Field(...)
     event_type: str = Field(...)
     element_html: str = Field(..., description="The HTML content of the element")
     details: Optional[EventDetails] = None
+
+    @field_validator("timestamp")
+    @classmethod
+    def utc_timestamp(cls, value: datetime) -> datetime:
+        return utc_datetime(value)
 
     class Config:
         populate_by_field_name = True
@@ -125,8 +132,8 @@ class SessionData(BaseModel):
 
 
 class CreateSessionData(BaseModel):
-    student_id: int = Field(...)
-    session_id: str = Field(...)
+    student_id: MoodleUserId = Field(...)
+    session_id: MongoObjectId = Field(..., description="24-character page metadata ObjectId returned by POST /statistics/page")
     student: str = Field(...)
     email: EmailStr = Field(...)
     course: str = Field(...)
@@ -141,7 +148,8 @@ class CreateSessionData(BaseModel):
             "examples": [
                 {
                     "student_id": 1,
-                    "session_id": str(uuid.uuid4()),
+                    "session_id": "60d5ec49f1a4a21f6c8b4567",
+                    "tabID": "example-tab",
                     "student": "Иванов Иван",
                     "email": "iiivanov@edu.ru",
                     "course": "Курс молодого бойца",
@@ -157,7 +165,8 @@ class CreateSessionData(BaseModel):
                 },
                 {
                     "student_id": 1,
-                    "session_id": str(uuid.uuid4()),
+                    "session_id": "60d5ec49f1a4a21f6c8b4567",
+                    "tabID": "example-tab",
                     "student": "Иванов Иван",
                     "email": "iiivanov@edu.ru",
                     "course": "Курс молодого бойца",
@@ -173,7 +182,8 @@ class CreateSessionData(BaseModel):
                 },
                 {
                     "student_id": 1,
-                    "session_id": str(uuid.uuid4()),
+                    "session_id": "60d5ec49f1a4a21f6c8b4567",
+                    "tabID": "example-tab",
                     "student": "Иванов Иван",
                     "email": "iiivanov@edu.ru",
                     "course": "Курс молодого бойца",

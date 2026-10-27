@@ -1,12 +1,10 @@
-import {test, expect} from '@playwright/test';
+import {test, expect} from './fixtures.mjs';
 import {randomUUID} from 'node:crypto';
 import {demo, api, login, markedUrl, trackerReady, flush, identity,
-  clipboardPermissions, selectText} from './helpers.mjs';
+  clipboardPermissions, selectText, allSessions} from './helpers.mjs';
 
 async function sessions(request, url) {
-  const response = await request.get(`${api}/statistics/`, {params: {pageSize: -1}});
-  expect(response.ok()).toBeTruthy();
-  const [rows] = await response.json();
+  const rows = await allSessions(request);
   return rows.filter(row => row.url === url);
 }
 const clicks = rows => rows.flatMap(row => row.actions)

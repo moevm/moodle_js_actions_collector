@@ -38,7 +38,7 @@ class Clock {
 
 // Startup/queue contract tests with a controlled clock and transport.
 // These do not replace real Moodle/browser tests.
-async function startTracker({deliver = ok, register, requireReady = true} = {}) {
+async function startTracker({deliver = ok, register, requireReady = true, ingestKey = 'test-write-only-key'} = {}) {
   const clock = new Clock();
   const requests = [];
   const listeners = new Map();
@@ -59,6 +59,7 @@ async function startTracker({deliver = ok, register, requireReady = true} = {}) 
   const sandbox = {
     actionCollectorConfig: {
       apiUrl: 'https://collector.example/api',
+      ingestKey,
       user: {student_id: 7, student: 'Student', email: 'student@example.com', course: 'Course'},
     },
     document, location: {href: 'https://moodle.example/mod/page/view.php?id=7'},
@@ -71,7 +72,7 @@ async function startTracker({deliver = ok, register, requireReady = true} = {}) 
     Date: TestDate, Math: math, AbortController, TextEncoder,
     console: {info() {}, warn() {}},
     fetch: async (url, options) => {
-      const request = {url, body: JSON.parse(options.body), bytes: Buffer.byteLength(options.body), at: clock.now};
+      const request = {url, body: JSON.parse(options.body), bytes: Buffer.byteLength(options.body), at: clock.now, headers: options.headers};
       requests.push(request);
       if (url.endsWith('/statistics/page')) {
         return register ? register(request, options) : {ok: true, json: async () => pageId};
@@ -312,4 +313,20 @@ test('unavailable registration stops after three attempts and does not bind cont
   assert.equal(state.ready, false);
   assert.equal(state.queued, 0);
   assert.equal(listeners.has('mousedown'), false);
+});
+
+test('authentication uses the collection key only in request headers', async () => {
+  const tracker = await startTracker();
+  assert.ok(tracker.requests.length >= 2);
+  for (const request of tracker.requests) {
+    assert.equal(request.headers.Authorization, 'Bearer test-write-only-key');
+    assert.equal(JSON.stringify(request.body).includes('test-write-only-key'), false);
+  }
+});
+
+test('missing collection key leaves Moodle alone and does not start requests', async () => {
+  const tracker = await startTracker({ingestKey: '', requireReady: false});
+  assert.equal(tracker.state.ready, false);
+  assert.match(tracker.state.error, /Collection key/);
+  assert.equal(tracker.requests.length, 0);
 });

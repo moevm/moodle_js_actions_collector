@@ -6,7 +6,7 @@
 
 <script>
 import Navbar from "@/components/Navbar.vue";
-import axios from "axios";
+import axios from "@/api.mjs";
 import UsersTable from "@/components/Tables/UsersTable.vue";
 
 const USERS_URL = "/api/user/";
@@ -61,15 +61,15 @@ export default {
                 FIO: FIO,
                 email: element.email,
                 position: position,
-                password: element.password,
                 actions: ''
               };
               this.usersInfo.push(user);
             });
           })
           .catch((error) => {
+            if (error.response?.status === 401) return;
             alert("Ошибка при получении данных");
-            console.error("Ошибка при получении данных:", error);
+            console.error("Ошибка при получении данных:", error.response?.status || error.message);
           });
     }
   }

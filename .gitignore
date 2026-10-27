@@ -19,3 +19,5 @@ e2e/npm-cache/
 
 /prod_moodle/
 /prod-plugin-inventory.tsv
+
+/.env

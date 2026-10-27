@@ -5,7 +5,7 @@
         :width="containerWidth"
         :height="containerHeight"
     >
-      <DataForm fast-fail>
+      <DataForm fast-fail @submit.prevent="createUser">
         <DataInput v-model="email" label="Почта" id="email-input"></DataInput>
         <DataInput v-model="surname" label="Фамилия" id="surname-input"></DataInput>
         <DataInput v-model="name" label="Имя" id="name-input"></DataInput>
@@ -18,8 +18,9 @@
             @click:append-inner="show1 = !show1"
             id="password-input">
         </DataInput>
-        <DataButton title='готово' @click="createUser" id="create-button"></DataButton>
-        <DataButton class="cancel" title='отмена' @click="cancel"></DataButton>
+        <v-alert v-if="errorMessage" type="error" variant="tonal" role="alert">{{ errorMessage }}</v-alert>
+        <DataButton title='готово' :disabled="creating" @click.prevent="createUser" id="create-button"></DataButton>
+        <DataButton class="cancel" title='отмена' :disabled="creating" @click.prevent="cancel"></DataButton>
       </DataForm>
     </AuthForm>
   </Navbar>
@@ -31,7 +32,7 @@ import DataForm from "@/components/Data/DataForm.vue";
 import DataButton from "@/components/Data/DataButton.vue";
 import AuthForm from "@/components/AuthForm.vue";
 
-import axios from 'axios';
+import axios from '@/api.mjs';
 import Navbar from "@/components/Navbar.vue";
 
 const CREATE_URL = '/api/user/'
@@ -52,7 +53,9 @@ export default {
       name: '',
       lastname: '',
       password: '',
-      show1: false
+      show1: false,
+      creating: false,
+      errorMessage: ''
     };
   },
 
@@ -79,7 +82,10 @@ export default {
   },
 
   methods: {
-    createUser() {
+    async createUser() {
+      if (this.creating) return;
+      this.creating = true;
+      this.errorMessage = '';
       const userData = {
         email: this.email,
         surname: this.surname,
@@ -88,19 +94,29 @@ export default {
         password: this.password
       };
 
-      axios
-          .post(CREATE_URL, userData)
-          .then((response) => {
-            console.log('Пользователь успешно создан:', response.data);
-            this.cancel();
-          })
-          .catch((error) => {
-            console.error('Ошибка при создании пользователя:', error);
-            this.cancel();
-          });
+      try {
+        await axios.post(CREATE_URL, userData);
+        this.cancel();
+      } catch (error) {
+        const status = error.response?.status;
+        if (status === 401) return;
+        if (status === 409) {
+          this.errorMessage = 'Пользователь с такой почтой уже существует. Укажите другой адрес.';
+        } else if (status === 422) {
+          this.errorMessage = 'Проверьте почту и обязательные поля.';
+        } else if (status === 503) {
+          this.errorMessage = 'Управление пользователями временно недоступно. Обратитесь к администратору сервера.';
+        } else {
+          this.errorMessage = 'Не удалось создать пользователя. Повторите попытку.';
+        }
+        console.error('Ошибка при создании пользователя:', status || 'network');
+      } finally {
+        this.creating = false;
+      }
     },
 
     cancel() {
+      this.errorMessage = '';
       this.email = '';
       this.surname = '';
       this.name = '';

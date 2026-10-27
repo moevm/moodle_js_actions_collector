@@ -1,6 +1,6 @@
-import {test, expect} from '@playwright/test';
+import {test, expect} from './fixtures.mjs';
 import {randomUUID} from 'node:crypto';
-import {demo, api, login, markedUrl, trackerReady, flush, identity, actionsFor} from './helpers.mjs';
+import {demo, api, login, markedUrl, trackerReady, flush, identity, actionsFor, allSessions} from './helpers.mjs';
 
 async function setup(page) {
   await login(page);
@@ -46,9 +46,7 @@ test('interactions: page registration sends only metadata and keeps events linke
   expect(pages[0]).not.toHaveProperty('page_html');
   expect(pages[0]).toMatchObject(sent[0]);
 
-  const eventsResponse = await request.get(`${api}/statistics/`, {params: {student_id: who.student_id, pageSize: -1}});
-  expect(eventsResponse.ok()).toBeTruthy();
-  const [batches] = await eventsResponse.json();
+  const batches = await allSessions(request, {student_id: who.student_id});
   const own = batches.filter(row => row.url === who.url);
   expect(own.length).toBeGreaterThan(0);
   expect(own.every(row => row.session_id === pages[0]._id)).toBe(true);
